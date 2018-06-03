@@ -12,3 +12,9 @@ def test_setup():
 
     sslf = SplunkSuperLightForwarder.setup(config_file='t/sslf.3')
     assert sslf.config_file == 't/sslf.3'
+
+    fail = None
+    try: sslf = SplunkSuperLightForwarder.setup(config='t/sslf.3')
+    except Exception as e:
+        fail = e
+    assert 'valid config' in str(fail)
