@@ -1,10 +1,14 @@
 import os
+import shelve
+from SplunkSuperLightForwarder.meta import MetaData
 
-class Reader(object):
-    def __init__(self, path):
+class Reader(MetaData):
+    def __init__(self, path, meta_data_dir=None):
         self.path = path
         self.last_mtime = 0
         self.tell = 0
+        self.mid = 'lines-reader-{}'.format(self.path.replace('/','_'))
+        self.meta_data_dir = meta_data_dir
 
     @property
     def stat(self):
