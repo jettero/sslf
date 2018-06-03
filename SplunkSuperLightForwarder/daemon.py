@@ -20,10 +20,11 @@ class Daemon(object):
     verbose = False
     daemonize = False
     config_file = '/etc/sslf.conf'
+    meta_data_dir = '/var/cache/sslf'
     paths = None
 
     def __init__(self, *a, **kw):
-        self._grok_args(kw)
+        self._grok_args(kw, with_errors=True)
         self.parse_args(a)
         self.read_config()
 
@@ -37,13 +38,13 @@ class Daemon(object):
                     ret[k] = a
         return ret
 
-    def _grok_args(self, args):
+    def _grok_args(self, args, with_errors=False):
         args = _dictify_args(args)
         for k in args:
-            if k.startswith('_'):
-                continue
-            if hasattr(self,k):
+            if k in ('verbose', 'daemonize', 'config_file', 'meta_data_dir',):
                 setattr(self,k, args[k])
+            elif with_errors:
+                raise Exception("{} is not a valid config argument".format(k))
 
     def _grok_path(self, path, args):
         if self.paths is None:
@@ -58,7 +59,7 @@ class Daemon(object):
         try:
             m = importlib.import_module(engine)
             c = getattr(m, clazz)
-            self.paths[path]['reader'] = c(path)
+            self.paths[path]['reader'] = c(path, meta_data_dir=self.meta_data_dir)
         except ModuleNotFoundError as e:
             log.error("couldn't find {1} in {0}: {2}".format(engine,clazz,e))
 
@@ -69,6 +70,8 @@ class Daemon(object):
             help="don't fork and become a daemon")
         parser.add_argument('-c', '--config-file', type=str, default=self.config_file,
             help="config file (default: %(default)s)")
+        parser.add_argument('-m', '--meta-data-dir', type=str, default=self.meta_data_dir,
+            help="location of meta data (default: %(default)s)")
         args = parser.parse_args(a)
         self._grok_args(args)
 
