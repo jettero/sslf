@@ -79,3 +79,5 @@ class MySplunkHEC(object):
             raise Exception("Splunk HEC Error code={code}: {text}".format(**dat))
 
         return dat
+
+HEC = MySplunkHEC
