@@ -1,12 +1,20 @@
 import pytest
-import os
+import os, shutil
 
 from SplunkSuperLightForwarder.engine.lines import Reader
+
+def _e(var):
+    if var in os.environ:
+        l = os.environ.get(var).lower()
+        if l in ('true', '1', 'yes', 't'):
+            return False
+    return True
 
 @pytest.fixture
 def tfile(request):
     def fin():
-        os.unlink('t/file')
+        if _e('NO_FIN') and _e('NO_FILE_FIN'):
+            os.unlink('t/file')
     request.addfinalizer(fin)
     fh = open('t/file', 'w')
     def my_print(self,f,*a,**kw):
@@ -17,4 +25,13 @@ def tfile(request):
 
 @pytest.fixture
 def linesReader(tfile):
-    return Reader('t/file')
+    return Reader('t/file', meta_data_dir='t/meta')
+
+@pytest.fixture
+def mdir(request):
+    def fin():
+        if _e('NO_FIN') and _e('NO_META_FIN') and os.path.isdir('t/meta'):
+            shutil.rmtree('t/meta')
+    request.addfinalizer(fin)
+    fin()
+    return 't/meta'

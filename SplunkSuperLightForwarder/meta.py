@@ -1,25 +1,31 @@
 import os
-import jsonpickle
+import json
+import logging
+
+log = logging.getLogger('meta-data')
 
 class MetaData(object):
 
     @property
-    def _mid(self):
-        try:
-            assert self.mid is not None
-            return self.mid
-        except:
-            raise Exception("{} failed to define a meta-data-id in @mid".format(self.__class__.__name__))
+    def meta_basename(self):
+        return '{}.json'.format(self.mid.replace('/','_'))
 
     @property
-    def _meta_data_dir(self):
-        try:
-            assert self.meta_data_dir is not None
-            return self.meta_data_dir
-        except:
-            raise Exception("{} failed to define a meta-data-dir".format(self.__class__.__name__))
+    def meta_fname(self):
+        return os.path.join(self.meta_data_dir, self.meta_basename)
 
     def save(self):
-        fname = os.path.join(self._meta_data_dir, '{}.json'.format(self._mid))
-        with open(fname, 'w') as fh:
-            fh.write( jsonpickle.dumps(self) )
+        os.makedirs(self.meta_data_dir, exist_ok=True)
+        with open(self.meta_fname, 'w') as fh:
+            json.dump(self.serialize(), fh)
+
+    def load(self):
+        fname = self.meta_fname
+        if os.path.isfile(fname):
+            with open(self.meta_fname, 'r') as fh:
+                try:
+                    dat = json.load(fh)
+                except json.decoder.JSONDecodeError as e:
+                    log.error("failed to load %s: %s", self.meta_fname, e)
+                    return
+            self.deserialize(dat)
