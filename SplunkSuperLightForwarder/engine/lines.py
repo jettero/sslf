@@ -62,18 +62,12 @@ class Reader(MetaData):
 
     def trunc_check(self):
         st = self.stat
-        log.debug("here1")
         if st.st_mtime > self.mtime and st.st_size < self.size:
-            log.debug("here1.5")
             self._reset()
             return False
-        log.debug("here2 gen_sig=%s, self_sig=%s",
-            self.gen_sig(True), self.sig)
         if self.gen_sig(True) != self.sig:
-            log.debug("here2.5")
             self._reset()
             return False
-        log.debug("here3")
         return True
 
     def serialize(self):
@@ -108,7 +102,7 @@ class Reader(MetaData):
     def ready(self):
         self.trunc_check()
         s = self.stat
-        if s.st_size > 0 and s.st_mtime > self.mtime:
+        if s.st_size > 0 and (s.st_mtime > self.mtime or (s.st_mtime == self.mtime and s.st_size > self.size)):
             return True
         return False
 

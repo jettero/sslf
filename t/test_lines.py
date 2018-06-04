@@ -20,8 +20,6 @@ def test_lines(tfile, linesReader, mdir):
     assert linesReader.ready is True
     assert list(linesReader.read()) == ['blah\n']
 
-    import logging
-    logging.debug("__YOLO__")
     tfile.my_trunc()
     tfile.my_print("yolo")
     assert linesReader.ready is True
