@@ -102,7 +102,7 @@ class Reader(MetaData):
     def ready(self):
         self.trunc_check()
         s = self.stat
-        if s.st_size > 0 and (s.st_mtime > self.mtime or (s.st_mtime == self.mtime and s.st_size > self.size)):
+        if s.st_size > 0 and s.st_size > self.size and s.st_mtime >= self.mtime:
             return True
         return False
 
