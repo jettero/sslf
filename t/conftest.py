@@ -21,6 +21,11 @@ def tfile(request):
         self.write( f.format(*a,**kw) + '\n' )
         self.flush()
     fh.my_print = my_print.__get__(fh, fh.__class__) # bind my_print to fh
+    def my_trunc(self):
+        self.seek(0)
+        self.truncate()
+        self.flush()
+    fh.my_trunc = my_trunc.__get__(fh, fh.__class__)
     return fh
 
 @pytest.fixture
