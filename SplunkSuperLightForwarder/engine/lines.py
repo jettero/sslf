@@ -11,6 +11,9 @@ class Reader(MetaData):
         self.meta_data_dir = meta_data_dir
         self.load()
 
+    def __repr__(self):
+        return "lines.Reader({}[{}])".format(self.path, self.tell)
+
     def serialize(self):
         return {'path': self.path, 'mtime': self.mtime, 'tell': self.tell}
 
