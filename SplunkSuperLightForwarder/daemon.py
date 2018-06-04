@@ -5,6 +5,7 @@ import argparse
 import configparser
 import os
 import logging
+import time
 
 from SplunkSuperLightForwarder.hec import HEC
 
@@ -27,11 +28,11 @@ class Daemon(object):
     hec = None
     token = None
     index = None
-    source = None
+    sourcetype = None
 
     _fields = (
         'verbose', 'daemonize', 'config_file', 'meta_data_dir',
-        'hec','token','index','source',
+        'hec','token','index','sourcetype',
     )
 
     def __init__(self, *a, **kw):
@@ -83,7 +84,7 @@ class Daemon(object):
             help="config file (default: %(default)s)")
         parser.add_argument('-m', '--meta-data-dir', type=str, default=self.meta_data_dir,
             help="location of meta data (default: %(default)s)")
-        args = parser.parse_args(a)
+        args = parser.parse_args(a) if a else parser.parse_args()
         self._grok_args(args)
 
     def read_config(self):
@@ -102,14 +103,19 @@ class Daemon(object):
         while True:
             for pv in self.paths.values():
                 reader = pv['reader']
-                hec = pv.get('hec', self.hec)
+                hec_url = pv.get('hec', self.hec)
                 token = pv.get('token', self.token)
                 index = pv.get('index', self.index or 'tmp')
-                source = pv.get('source', self.source or 'sslf:{}'.format(reader.__class__.__name__))
-                hec = HEC(hec)
+                sourcetype = pv.get('sourcetype', self.sourcetype or 'sslf:{}'.format(reader.__class__.__name__))
+                hec = HEC(hec_url, token, sourcetype=sourcetype, index=index)
                 if reader.ready:
                     for item in self.paths['reader'].read():
-                        hec.send_event(item)
+                        log.info("sending event")
+                        try:
+                            hec.send_event(item)
+                        except Exception as e:
+                            log.error("error sending event (hec=%s, index=%s, sourcetype=%s): %s",
+                                hec_url, index, sourcetype, e)
             time.sleep(1)
 
 def setup(*a, **kw):

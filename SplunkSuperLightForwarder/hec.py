@@ -59,8 +59,8 @@ class MySplunkHEC(object):
         if res.status == 400:
             return res # splunk seems to use 400 codes for data format errors
 
-        if res.status < 200 or res.status > 299:
-            raise Exception("HTTP ERROR {status}: {error_maybe}".format(status=res.status, error_maybe=res.data))
+        # if res.status < 200 or res.status > 299:
+        #     raise Exception("HTTP ERROR {status}: {error_maybe}".format(status=res.status, error_maybe=res.data))
 
         return res
 
