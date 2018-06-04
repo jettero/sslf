@@ -1,5 +1,6 @@
 
 import os, socket, datetime, urllib3, json, time
+from urllib3.exceptions import InsecureRequestWarning
 
 HOSTNAME = socket.gethostname()
 
@@ -22,7 +23,6 @@ class MySplunkHEC(object):
     }
 
     path = "/services/collector/event"
-    url_format = "{0.proto}://{0.server}:{0.port}{0.path}"
 
     def __init__(self, hec_url, token, verify_ssl=True, **base_payload):
         self.token  = token
@@ -30,10 +30,13 @@ class MySplunkHEC(object):
         self.verify = verify_ssl
         self.proto  = 'http'
 
+        if self.url.endswith('/'):
+            self.url = self.url[:len(self.url)-1]
+
         self.pool_manager = urllib3.PoolManager(timeout=2.5)
 
         if self.verify == False:
-            urllib3.disable_warnings()
+            urllib3.disable_warnings(InsecureRequestWarning)
 
         self.base_payload.update(base_payload)
 
@@ -43,7 +46,7 @@ class MySplunkHEC(object):
             'Content-Type': 'application/json',
         }
         encoded_data = json.dumps(json_data, cls=MyJSONEncoder).encode('utf-8')
-        return self.pool_manager.request('POST', self.url, body=encoded_data, headers=headers)
+        return self.pool_manager.request('POST', self.url + self.path, body=encoded_data, headers=headers)
 
     def send_event(self, event, **payload_data):
         payload = self.base_payload.copy()
@@ -59,8 +62,8 @@ class MySplunkHEC(object):
         if res.status == 400:
             return res # splunk seems to use 400 codes for data format errors
 
-        # if res.status < 200 or res.status > 299:
-        #     raise Exception("HTTP ERROR {status}: {error_maybe}".format(status=res.status, error_maybe=res.data))
+        if res.status < 200 or res.status > 299:
+            raise Exception("HTTP ERROR {status}: {error_maybe}".format(status=res.status, error_maybe=res.data))
 
         return res
 

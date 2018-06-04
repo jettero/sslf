@@ -59,6 +59,8 @@ class Daemon(object):
                 raise Exception("{} is not a valid config argument".format(k))
 
     def _grok_path(self, path, args):
+        if not path.startswith('/'):
+            return
         if self.paths is None:
             self.paths = dict()
         if path not in self.paths:
@@ -72,7 +74,9 @@ class Daemon(object):
             m = importlib.import_module(engine)
             c = getattr(m, clazz)
             self.paths[path]['reader'] = c(path, meta_data_dir=self.meta_data_dir)
+            log.info("added %s to watchlist using %s", path, self.paths[path]['reader'])
         except ModuleNotFoundError as e:
+            self.paths.pop(path, None)
             log.error("couldn't find {1} in {0}: {2}".format(engine,clazz,e))
 
     def parse_args(self, a):
@@ -107,15 +111,15 @@ class Daemon(object):
                 token = pv.get('token', self.token)
                 index = pv.get('index', self.index or 'tmp')
                 sourcetype = pv.get('sourcetype', self.sourcetype or 'sslf:{}'.format(reader.__class__.__name__))
-                hec = HEC(hec_url, token, sourcetype=sourcetype, index=index)
+                hec = HEC(hec_url, token, sourcetype=sourcetype, index=index, verify_ssl=False)
                 if reader.ready:
-                    for item in self.paths['reader'].read():
-                        log.info("sending event")
+                    for item in reader.read():
+                        log.info("sending event (hec=%s, index=%s, sourcetype=%s)",
+                            hec_url, index, sourcetype)
                         try:
                             hec.send_event(item)
                         except Exception as e:
-                            log.error("error sending event (hec=%s, index=%s, sourcetype=%s): %s",
-                                hec_url, index, sourcetype, e)
+                            log.error("error sending event: %s", e)
             time.sleep(1)
 
 def setup(*a, **kw):
