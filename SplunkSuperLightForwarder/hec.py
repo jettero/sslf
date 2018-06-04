@@ -24,7 +24,7 @@ class MySplunkHEC(object):
     path = "/services/collector/event"
     url_format = "{0.proto}://{0.server}:{0.port}{0.path}"
 
-    def __init__(self, hec_url, token, verify_ssl=False, **base_payload):
+    def __init__(self, hec_url, token, verify_ssl=True, **base_payload):
         self.token  = token
         self.url    = hec_url
         self.verify = verify_ssl

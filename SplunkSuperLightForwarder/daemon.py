@@ -6,6 +6,8 @@ import configparser
 import os
 import logging
 
+from SplunkSuperLightForwarder.hec import HEC
+
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('SSLF')
 
@@ -22,6 +24,15 @@ class Daemon(object):
     config_file = '/etc/sslf.conf'
     meta_data_dir = '/var/cache/sslf'
     paths = None
+    hec = None
+    token = None
+    index = None
+    source = None
+
+    _fields = (
+        'verbose', 'daemonize', 'config_file', 'meta_data_dir',
+        'hec','token','index','source',
+    )
 
     def __init__(self, *a, **kw):
         self._grok_args(kw, with_errors=True)
@@ -41,7 +52,7 @@ class Daemon(object):
     def _grok_args(self, args, with_errors=False):
         args = _dictify_args(args)
         for k in args:
-            if k in ('verbose', 'daemonize', 'config_file', 'meta_data_dir',):
+            if k in self._fields:
                 setattr(self,k, args[k])
             elif with_errors:
                 raise Exception("{} is not a valid config argument".format(k))
@@ -88,13 +99,18 @@ class Daemon(object):
                 self._grok_path(k, config[k])
 
     def start(self):
-        import subprocess, os
-        ps_cmd = 'ps wwo user,pid,rsz,vsz,stat,cmd -p {}'.format(os.getpid()).split()
-        p = subprocess.Popen(ps_cmd, stdout=subprocess.PIPE)
-        stdout,stderr = p.communicate()
-        for line in stdout.splitlines():
-            log.debug("ps listing: {}".format(line.decode()))
-        return self
+        while True:
+            for pv in self.paths.values():
+                reader = pv['reader']
+                hec = pv.get('hec', self.hec)
+                token = pv.get('token', self.token)
+                index = pv.get('index', self.index or 'tmp')
+                source = pv.get('source', self.source or 'sslf:{}'.format(reader.__class__.__name__))
+                hec = HEC(hec)
+                if reader.ready:
+                    for item in self.paths['reader'].read():
+                        hec.send_event(item)
+            time.sleep(1)
 
 def setup(*a, **kw):
     if len(a) == 1 and isinstance(a[0], (list,tuple,)):
