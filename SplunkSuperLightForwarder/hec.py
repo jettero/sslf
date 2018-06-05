@@ -54,7 +54,7 @@ class MySplunkHEC(object):
 
         payload['event'] = event
 
-        if not payload.get('time'):
+        if not payload.get('time') and isinstance(event, dict):
             payload['time'] = event.get('time', datetime.datetime.now())
 
         res = self._post_message(payload)
