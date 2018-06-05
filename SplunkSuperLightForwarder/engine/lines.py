@@ -111,7 +111,7 @@ class Reader(MetaData):
             fh.seek(self.tell)
             line = fh.readline()
             while line:
-                yield {'raw': line}
+                yield line
                 line = fh.readline()
             self._save_stat( fh.tell() )
         self.save()
