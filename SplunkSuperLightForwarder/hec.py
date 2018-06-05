@@ -48,7 +48,7 @@ class MySplunkHEC(object):
         encoded_data = json.dumps(json_data, cls=MyJSONEncoder).encode('utf-8')
         return self.pool_manager.request('POST', self.url + self.path, body=encoded_data, headers=headers)
 
-    def send_event(self, event, **payload_data):
+    def _send_event(self, event, **payload_data):
         payload = self.base_payload.copy()
         payload.update(payload_data)
 
@@ -67,8 +67,8 @@ class MySplunkHEC(object):
 
         return res
 
-    def check_event(self, event, **payload_data):
-        res = self.send_event(event, **payload_data)
+    def send_event(self, event, **payload_data):
+        res = self._send_event(event, **payload_data)
 
         try:
             dat = json.loads(res.data.decode('utf-8'))
