@@ -1,6 +1,9 @@
 import SplunkSuperLightForwarder
+import sys
 
 def test_setup():
+    sys.argv = [ sys.argv[0] ]
+
     sslf = SplunkSuperLightForwarder.setup()
     assert sslf.config_file == SplunkSuperLightForwarder.Daemon.config_file
 

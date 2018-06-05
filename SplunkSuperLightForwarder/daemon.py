@@ -30,6 +30,7 @@ class Daemon(daemonize.Daemonize):
     token = None
     index = None
     sourcetype = None
+    logger = logging.getLogger('SSLF')
 
     _fields = (
         'verbose', 'daemonize', 'config_file', 'meta_data_dir',
@@ -41,7 +42,6 @@ class Daemon(daemonize.Daemonize):
         self.parse_args(a)
         self.read_config()
 
-        self.logger = logging.getLogger('SSLF')
         super(Daemon, self).__init__(app="SSLF", pid=self.pid_file, action=lambda: self.loop())
 
     def _barf_settings(self):
@@ -81,7 +81,7 @@ class Daemon(daemonize.Daemonize):
             self.logger.info("added %s to watchlist using %s", path, self.paths[path]['reader'])
         except ModuleNotFoundError as e:
             self.paths.pop(path, None)
-            self.logger.error("couldn't find {1} in {0}: {2}".format(reader,clazz,e))
+            self.logger.error("couldn't find {1} in {0}: {2}".format(libdir,clazz,e))
 
     def parse_args(self, a):
         parser = argparse.ArgumentParser(description="this is program") # options and program name are automatic
