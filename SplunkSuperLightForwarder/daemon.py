@@ -6,11 +6,10 @@ import configparser
 import os
 import logging
 import time
+import signal
+import daemonize
 
 from SplunkSuperLightForwarder.hec import HEC
-
-logging.basicConfig(level=logging.DEBUG)
-log = logging.getLogger('SSLF')
 
 def _dictify_args(args):
     if isinstance(args, argparse.Namespace):
@@ -19,7 +18,9 @@ def _dictify_args(args):
         return dict(args)
     return args
 
-class Daemon(object):
+class Daemon(daemonize.Daemonize):
+    log_file = '/var/log/sslf.log'
+    pid_file = '/var/run/sslf.pid'
     verbose = False
     daemonize = False
     config_file = '/etc/sslf.conf'
@@ -32,13 +33,16 @@ class Daemon(object):
 
     _fields = (
         'verbose', 'daemonize', 'config_file', 'meta_data_dir',
-        'hec','token','index','sourcetype',
+        'hec','token','index','sourcetype', 'log_file', 'pid_file',
     )
 
     def __init__(self, *a, **kw):
         self._grok_args(kw, with_errors=True)
         self.parse_args(a)
         self.read_config()
+
+        self.logger = logging.getLogger('SSLF')
+        super(Daemon, self).__init__(app="SSLF", pid=self.pid_file, action=lambda: self.loop())
 
     def _barf_settings(self):
         ret = dict()
@@ -74,16 +78,16 @@ class Daemon(object):
             m = importlib.import_module(engine)
             c = getattr(m, clazz)
             self.paths[path]['reader'] = c(path, meta_data_dir=self.meta_data_dir)
-            log.info("added %s to watchlist using %s", path, self.paths[path]['reader'])
+            self.logger.info("added %s to watchlist using %s", path, self.paths[path]['reader'])
         except ModuleNotFoundError as e:
             self.paths.pop(path, None)
-            log.error("couldn't find {1} in {0}: {2}".format(engine,clazz,e))
+            self.logger.error("couldn't find {1} in {0}: {2}".format(engine,clazz,e))
 
     def parse_args(self, a):
         parser = argparse.ArgumentParser(description="this is program") # options and program name are automatic
         parser.add_argument('-v', '--verbose', action='store_true')
-        parser.add_argument('-n', '--no-daemonize', action='store_true',
-            help="don't fork and become a daemon")
+        parser.add_argument('-f', '--daemonize', action='store_true',
+            help="fork and become a daemon")
         parser.add_argument('-c', '--config-file', type=str, default=self.config_file,
             help="config file (default: %(default)s)")
         parser.add_argument('-m', '--meta-data-dir', type=str, default=self.meta_data_dir,
@@ -96,14 +100,14 @@ class Daemon(object):
         try:
             config.read(self.config_file)
         except Exception as e:
-            log.error("couldn't read config file {}: {}".format(self.config_file, e))
+            self.logger.error("couldn't read config file {}: {}".format(self.config_file, e))
         for k in config:
             if k == 'sslf':
                 self._grok_args(config[k])
             else:
                 self._grok_path(k, config[k])
 
-    def start(self):
+    def loop(self):
         while True:
             for pv in self.paths.values():
                 reader = pv['reader']
@@ -114,13 +118,25 @@ class Daemon(object):
                 hec = HEC(hec_url, token, sourcetype=sourcetype, index=index, verify_ssl=False)
                 if reader.ready:
                     for item in reader.read():
-                        log.info("sending event (hec=%s, index=%s, sourcetype=%s)",
+                        self.logger.info("sending event (hec=%s, index=%s, sourcetype=%s)",
                             hec_url, index, sourcetype)
                         try:
                             hec.send_event(item)
                         except Exception as e:
-                            log.error("error sending event: %s", e)
+                            self.logger.error("error sending event: %s", e)
             time.sleep(1)
+
+    def start(self):
+        if self.daemonize:
+            fh = logging.FileHandler(self.log_file, 'a')
+            fh.setLevel(logging.INFO)
+            log.addHandler(fh)
+            self.keep_fds = [ fh.stream.fileno() ]
+            super(Daemon, self).start()
+        else:
+            signal.signal(signal.SIGINT, lambda sig,frame: self.exit())
+            logging.basicConfig(level=logging.DEBUG)
+            self.loop()
 
 def setup(*a, **kw):
     if len(a) == 1 and isinstance(a[0], (list,tuple,)):
