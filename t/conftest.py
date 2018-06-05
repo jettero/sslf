@@ -1,7 +1,7 @@
 import pytest
 import os, shutil
 
-from SplunkSuperLightForwarder.engine.lines import Reader
+from SplunkSuperLightForwarder.reader.lines import Reader
 
 def _e(var):
     if var in os.environ:

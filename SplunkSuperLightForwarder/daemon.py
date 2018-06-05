@@ -70,18 +70,18 @@ class Daemon(daemonize.Daemonize):
         if path not in self.paths:
             self.paths[path] = dict()
         self.paths[path].update(args)
-        engine = self.paths.pop('engine', 'lines')
+        libdir = self.paths.pop('reader', 'lines')
         clazz  = self.paths.pop('class', 'Reader')
-        if '.' not in engine:
-            engine = 'SplunkSuperLightForwarder.engine.' + engine
+        if '.' not in libdir:
+            libdir = 'SplunkSuperLightForwarder.libdir.' + libdir
         try:
-            m = importlib.import_module(engine)
+            m = importlib.import_module(libdir)
             c = getattr(m, clazz)
             self.paths[path]['reader'] = c(path, meta_data_dir=self.meta_data_dir)
             self.logger.info("added %s to watchlist using %s", path, self.paths[path]['reader'])
         except ModuleNotFoundError as e:
             self.paths.pop(path, None)
-            self.logger.error("couldn't find {1} in {0}: {2}".format(engine,clazz,e))
+            self.logger.error("couldn't find {1} in {0}: {2}".format(reader,clazz,e))
 
     def parse_args(self, a):
         parser = argparse.ArgumentParser(description="this is program") # options and program name are automatic
