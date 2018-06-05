@@ -77,8 +77,9 @@ class Daemon(daemonize.Daemonize):
         try:
             m = importlib.import_module(libdir)
             c = getattr(m, clazz)
-            self.paths[path]['reader'] = c(path, meta_data_dir=self.meta_data_dir)
-            self.logger.info("added %s to watchlist using %s", path, self.paths[path]['reader'])
+            o = c(path, meta_data_dir=self.meta_data_dir, config=self.paths[path])
+            self.paths[path]['reader'] = o
+            self.logger.info("added %s to watchlist using %s", path, o)
         except ModuleNotFoundError as e:
             self.paths.pop(path, None)
             self.logger.error("couldn't find {1} in {0}: {2}".format(libdir,clazz,e))
