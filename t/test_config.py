@@ -27,4 +27,4 @@ def test_read_file():
     assert sslf.config_file == 't/test1.conf'
     assert sslf.hec == 'https://localhost:54321/'
     assert set(sslf.paths.keys()) == set(['/tmp/funny-little.log'])
-    assert set(sslf.paths.get('/tmp/funny-little.log',{}).keys()) == set(['re_f1', 'reader'])
+    assert set(sslf.paths.get('/tmp/funny-little.log',{}).keys()) == set(['re_f1', 'reader', 'hec'])
