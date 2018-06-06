@@ -128,13 +128,16 @@ class Daemon(daemonize.Daemonize):
 
     class HECEvent(AttrDict):
         def send(self):
-            self.hec.send_event( self.event, source=self.source, fields=self.fields )
+            hec = self.pop('hec')
+            event = self.pop('event')
+            hec.send_event( event, **self )
 
     def step(self):
         for pv in self.paths.values():
             if pv.reader.ready:
                 for evr in pv.reader.read():
-                    yield self.HECEvent(hec=pv.hec, event=evr.event, source=evr.source, fields=evr.fields)
+                    yield self.HECEvent(hec=pv.hec, event=evr.event,
+                        source=evr.source, time=evr.time, fields=evr.fields)
 
     def loop(self):
         while True:
@@ -155,8 +158,9 @@ class Daemon(daemonize.Daemonize):
             self.keep_fds = [ fh.stream.fileno() ]
             super(Daemon, self).start()
         else:
+            import sys
             logging.basicConfig(level=logging.DEBUG)
-            signal.signal(signal.SIGINT, lambda sig,frame: self.exit())
+            signal.signal(signal.SIGINT, lambda sig,frame: sys.exit(0))
             self.loop()
 
 def setup(*a, **kw):

@@ -31,7 +31,6 @@ class MySplunkHEC(object):
         self.token  = token
         self.url    = hec_url
         self.verify = verify_ssl
-        self.proto  = 'http'
 
         if self.url.endswith('/'):
             self.url = self.url[:len(self.url)-1]
@@ -44,7 +43,7 @@ class MySplunkHEC(object):
         self.base_payload.update(base_payload)
 
     def __str__(self):
-        return "HEC({}{})"
+        return "HEC({}{})".format(self.url, self.path)
     __repr__ = __str__
 
     def _post_message(self, json_data):

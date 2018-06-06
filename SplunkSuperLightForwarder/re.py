@@ -1,7 +1,6 @@
 
 import re
 import logging
-import dateutil.parser
 
 FIELD_NAME_FORMAT = re.compile(r'^(?P<field_name>[^:+]+?)(?::(?P<input>.+?))?(?:\+(?P<flags>.+))?$')
 

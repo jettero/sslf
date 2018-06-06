@@ -2,6 +2,8 @@ import os, posix
 import shelve
 import hashlib
 import logging
+import dateutil.parser
+import time
 from SplunkSuperLightForwarder.meta import MetaData
 from SplunkSuperLightForwarder.re   import ReEngine
 from SplunkSuperLightForwarder.util import AttrDict
@@ -37,6 +39,8 @@ class Reader(MetaData):
         self.meta_data_dir = meta_data_dir
         self.load()
         self.trunc_check()
+
+        self.parse_time = config.get('parse_time')
 
         patterns = dict()
         if config is not None:
@@ -122,6 +126,13 @@ class Reader(MetaData):
                 line = fh.readline()
                 if not line:
                     break
-                yield AttrDict(event=line, source=self.path, fields=self._re(line))
+                evr = AttrDict(event=line, source=self.path, fields=self._re(line))
+                ptv = evr.fields.get(self.parse_time)
+                if ptv:
+                    log.debug("parsing field=%s value=%s as a datetime", self.parse_time, ptv)
+                    parsed = dateutil.parser.parse(ptv)
+                    evr['time'] = time.mktime( parsed.timetuple() )
+                    log.debug(" parsed time is %s", evr['time'])
+                yield evr
                 self._save_stat( fh.tell() )
         self.save()
