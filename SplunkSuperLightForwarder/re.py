@@ -1,12 +1,14 @@
 
 import re
 import logging
+import dateutil.parser
 
+FIELD_NAME_FORMAT = re.compile(r'^(?P<field_name>[^:+]+?)(?::(?P<input>.+?))?(?:\+(?P<flags>.+))?$')
 
 class ReEngine(object):
     def __init__(self, **re_config):
-        self.set_re(**re_config)
         self.logger = logging.getLogger('ReEngine')
+        self.set_re(**re_config)
 
     def set_re(self, **re_config):
         self._re = dict()
@@ -25,8 +27,12 @@ class ReEngine(object):
     def compute_fields(self, input):
         ret = dict()
         for rk in self._re:
-            rks = rk.split(':')
-            i = ret.get(rks[-1], input) if len(rks)>1 else input
+            m = FIELD_NAME_FORMAT.match(rk)
+            if m:
+                _, _input, _flags = m.groups()
+            else:
+                _, _input, _flags = rk, None, None
+            i = ret.get(_input, input) if _input else input
             for r in self._re[rk]:
                 m = r.search(i)
                 if m:
@@ -40,3 +46,8 @@ class ReEngine(object):
 
     def __call__(self, input):
         return self.compute_fields(input)
+
+    def __bool__(self):
+        if self._re:
+            return True
+        return False

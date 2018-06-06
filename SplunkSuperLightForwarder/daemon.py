@@ -44,7 +44,7 @@ class Daemon(daemonize.Daemonize):
         self.parse_args(a)
         self.read_config()
 
-        super(Daemon, self).__init__(app="SSLF", pid=self.pid_file, action=lambda: self.loop())
+        super(Daemon, self).__init__(app="SSLF", pid=self.pid_file, action=self.loop, logger=self.logger)
 
     def _barf_settings(self):
         ret = dict()
@@ -60,6 +60,9 @@ class Daemon(daemonize.Daemonize):
         args = _dictify_args(args)
         for k in args:
             if k in self._fields:
+                if isinstance(args[k], (str,)):
+                    if args[k].lower() in ('false', 'no', '0',): args[k] = False
+                    elif args[k].lower() in ('true', 'yes', '1',): args[k] = True
                 setattr(self,k, args[k])
             elif with_errors:
                 raise Exception("{} is not a valid config argument".format(k))
@@ -125,13 +128,13 @@ class Daemon(daemonize.Daemonize):
 
     class HECEvent(AttrDict):
         def send(self):
-            self.hec.send_event( self.event )
+            self.hec.send_event( self.event, source=self.source, fields=self.fields )
 
     def step(self):
         for pv in self.paths.values():
             if pv.reader.ready:
-                for event in pv.reader.read():
-                    yield self.HECEvent(hec=pv.hec, event=event)
+                for evr in pv.reader.read():
+                    yield self.HECEvent(hec=pv.hec, event=evr.event, source=evr.source, fields=evr.fields)
 
     def loop(self):
         while True:
@@ -145,14 +148,15 @@ class Daemon(daemonize.Daemonize):
 
     def start(self):
         if self.daemonize:
+            raise Exception("wtf")
             fh = logging.FileHandler(self.log_file, 'a')
             fh.setLevel(logging.INFO)
-            log.addHandler(fh)
+            self.logger.addHandler(fh)
             self.keep_fds = [ fh.stream.fileno() ]
             super(Daemon, self).start()
         else:
-            signal.signal(signal.SIGINT, lambda sig,frame: self.exit())
             logging.basicConfig(level=logging.DEBUG)
+            signal.signal(signal.SIGINT, lambda sig,frame: self.exit())
             self.loop()
 
 def setup(*a, **kw):

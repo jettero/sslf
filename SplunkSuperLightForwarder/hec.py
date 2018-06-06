@@ -1,6 +1,9 @@
 
 import os, socket, datetime, urllib3, json, time
 from urllib3.exceptions import InsecureRequestWarning
+import logging
+
+log = logging.getLogger('HEC')
 
 HOSTNAME = socket.gethostname()
 
@@ -40,12 +43,20 @@ class MySplunkHEC(object):
 
         self.base_payload.update(base_payload)
 
+    def __str__(self):
+        return "HEC({}{})"
+    __repr__ = __str__
+
     def _post_message(self, json_data):
         headers = {
             'Authorization': 'Splunk ' + self.token,
             'Content-Type': 'application/json',
         }
         encoded_data = json.dumps(json_data, cls=MyJSONEncoder).encode('utf-8')
+        fake_headers = headers.copy()
+        fake_headers['Authorization'] = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx' + headers['Authorization'][-4:]
+        log.debug("HEC.pool_manager.request('POST', url=%s + path=%s, body=%s, headers=%s)",
+            self.url, self.path, encoded_data, fake_headers)
         return self.pool_manager.request('POST', self.url + self.path, body=encoded_data, headers=headers)
 
     def _send_event(self, event, **payload_data):
@@ -55,7 +66,10 @@ class MySplunkHEC(object):
         payload['event'] = event
 
         if not payload.get('time') and isinstance(event, dict):
-            payload['time'] = event.get('time', datetime.datetime.now())
+            payload['time'] = event.get('time')
+
+        if not payload.get('time'):
+            payload['time'] = datetime.datetime.now()
 
         res = self._post_message(payload)
 

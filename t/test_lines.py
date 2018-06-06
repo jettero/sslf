@@ -4,26 +4,26 @@ def test_lines(tfile, linesReader, mdir):
     assert linesReader.ready is False
     tfile.my_print('supz')
     assert linesReader.ready is True
-    assert list(linesReader.read()) == ['supz\n']
+    assert [ x.event for x in linesReader.read()] == ['supz\n']
     assert linesReader.ready is False
-    assert list(linesReader.read()) == []
+    assert [ x.event for x in linesReader.read()] == []
 
     linesReader.save()
     assert os.path.isfile('t/meta/lines-reader-t_file.json') == True
 
     another_reader = linesReader.__class__(linesReader.path, meta_data_dir=linesReader.meta_data_dir)
     assert linesReader.ready is False
-    assert list(linesReader.read()) == []
+    assert [ x.event for x in linesReader.read() ] == []
 
     import logging
     tfile.my_print("blah")
     assert linesReader.ready is True
-    assert list(linesReader.read()) == ['blah\n']
+    assert [ x.event for x in linesReader.read() ] == ['blah\n']
 
     tfile.my_trunc()
     tfile.my_print("yolo")
     assert linesReader.ready is True
-    assert list(linesReader.read()) == ['yolo\n']
+    assert [ x.event for x in linesReader.read() ] == ['yolo\n']
 
 def test_sig(tfile, linesReader, mdir):
     tfile.truncate(0)

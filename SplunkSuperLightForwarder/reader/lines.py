@@ -4,6 +4,7 @@ import hashlib
 import logging
 from SplunkSuperLightForwarder.meta import MetaData
 from SplunkSuperLightForwarder.re   import ReEngine
+from SplunkSuperLightForwarder.util import AttrDict
 
 log = logging.getLogger('linesReader')
 
@@ -117,9 +118,10 @@ class Reader(MetaData):
     def read(self):
         with open(self.path, 'r') as fh:
             fh.seek(self.tell)
-            line = fh.readline()
-            while line:
-                yield line
+            while True:
                 line = fh.readline()
-            self._save_stat( fh.tell() )
+                if not line:
+                    break
+                yield AttrDict(event=line, source=self.path, fields=self._re(line))
+                self._save_stat( fh.tell() )
         self.save()
