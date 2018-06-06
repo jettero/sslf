@@ -123,20 +123,24 @@ class Daemon(daemonize.Daemonize):
             else:
                 self._grok_path(k, config[k])
 
+    class HECEvent(AttrDict):
+        def send(self):
+            self.hec.send_event( self.event )
+
     def step(self):
         for pv in self.paths.values():
             if pv.reader.ready:
                 for event in pv.reader.read():
-                    yield AttrDict(hec=pv.hec, event=event)
+                    yield self.HECEvent(hec=pv.hec, event=event)
 
     def loop(self):
         while True:
             for ev in self.step():
-                self.logger.info("sending event (%s)", ev.hec)
+                self.logger.debug("sending event (%s)", ev.hec)
                 try:
-                    ev.hec.send_event( ev.event )
+                    ev.send()
                 except Exception as e:
-                    self.logger.error("error sending event: %s", e)
+                    self.logger.error("error sending event (%s): %s", ev.hec, e)
             time.sleep(1)
 
     def start(self):
