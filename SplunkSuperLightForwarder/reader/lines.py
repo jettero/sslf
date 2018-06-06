@@ -3,6 +3,7 @@ import shelve
 import hashlib
 import logging
 from SplunkSuperLightForwarder.meta import MetaData
+from SplunkSuperLightForwarder.re   import ReEngine
 
 log = logging.getLogger('linesReader')
 
@@ -27,7 +28,7 @@ class Sig(object):
         return (self.h, self.b)
 
 class Reader(MetaData):
-    def __init__(self, path, meta_data_dir=None, signature_bytes=1024):
+    def __init__(self, path, meta_data_dir=None, signature_bytes=1024, config=None):
         self._reset()
         self.sbytes = signature_bytes
         self.path = path
@@ -35,6 +36,13 @@ class Reader(MetaData):
         self.meta_data_dir = meta_data_dir
         self.load()
         self.trunc_check()
+
+        patterns = dict()
+        if config is not None:
+            for k in config:
+                if k.startswith('re_'):
+                    patterns[ k[3:] ] = config[k]
+        self._re = ReEngine(**patterns)
 
     def __repr__(self):
         return "lines.Reader({}[{}])".format(self.path, self.tell)
