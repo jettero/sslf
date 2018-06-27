@@ -40,6 +40,9 @@ class Reader(MetaData):
         self.load()
         self.trunc_check()
 
+        try: config.get('something')
+        except: config = dict()
+
         self.parse_time = config.get('parse_time')
 
         patterns = dict()
