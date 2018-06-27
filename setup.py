@@ -24,7 +24,7 @@ setup(name='splunk-super-light-forwarder',
     author_email  = 'paul@jettero.pl',
     url           = 'https://github.com/jettero/sslf',
     py_modules    = ['SplunkSuperLightForwarder'],
-    tests_require = ['pytest'],
+    tests_require = ['pytest', 'pytest-pythonpath'],
     cmdclass      = {'test': PyTest},
     entry_points={
         'console_scripts': [
