@@ -62,8 +62,13 @@ class Reader(MetaData):
         else:                   sb = self.sbytes
 
         if sb > 0:
-            with open(self.path, 'r') as fh:
-                b = fh.read(sb)
+            try:
+                with open(self.path, 'r') as fh:
+                    b = fh.read(sb)
+            except IOError as e:
+                log.debug("gen_sig(%s): %s", self.path, e)
+                self._reset()
+                b = ''
 
         else: b = ''
 
@@ -98,16 +103,18 @@ class Reader(MetaData):
 
     @property
     def stat(self):
-        if os.path.isfile(self.path):
+        try:
             return os.stat(self.path)
+        except IOError as e:
+            log.debug("stat(%s): %s", self.path,e)
+            self._reset()
         return posix.stat_result( (0,)*10 )
 
     def _save_stat(self, tell=None):
         st = self.stat
         self.mtime = st.st_mtime
         self.size  = st.st_size
-        if tell is not None:
-            self.tell = tell
+        self.tell = 0 if tell is None else tell
         if st.st_size > self.sig.b and self.sig.b < self.sbytes:
             self._save_sig()
 
@@ -120,19 +127,22 @@ class Reader(MetaData):
         return False
 
     def read(self):
-        with open(self.path, 'r') as fh:
-            fh.seek(self.tell)
-            while True:
-                line = fh.readline()
-                if not line:
-                    break
-                evr = AttrDict(event=line, source=self.path, fields=self._re(line))
-                ptv = evr.fields.get(self.parse_time)
-                if ptv:
-                    log.debug("parsing field=%s value=%s as a datetime", self.parse_time, ptv)
-                    parsed = dateutil.parser.parse(ptv)
-                    evr['time'] = time.mktime( parsed.timetuple() )
-                    log.debug(" parsed time is %s", evr['time'])
-                yield evr
-                self._save_stat( fh.tell() )
+        try:
+            with open(self.path, 'r') as fh:
+                fh.seek(self.tell)
+                while True:
+                    line = fh.readline()
+                    if not line:
+                        break
+                    evr = AttrDict(event=line, source=self.path, fields=self._re(line))
+                    ptv = evr.fields.get(self.parse_time)
+                    if ptv:
+                        log.debug("parsing field=%s value=%s as a datetime", self.parse_time, ptv)
+                        parsed = dateutil.parser.parse(ptv)
+                        evr['time'] = time.mktime( parsed.timetuple() )
+                        log.debug(" parsed time is %s", evr['time'])
+                    yield evr
+                    self._save_stat( fh.tell() )
+        except IOError as e:
+            log.error("read(%s): %s", self.path, e)
         self.save()
