@@ -6,10 +6,11 @@ class AttrDict(dict):
         except: pass
         return self.get(name)
 
+DEFAULT_RATE_LIMIT = 1
 class RateLimit(object):
     limits = dict()
 
-    def __init__(self, tag, limit=1):
+    def __init__(self, tag, limit=DEFAULT_RATE_LIMIT):
         self.tag = tag
         self.limit = limit
 
@@ -37,7 +38,7 @@ class RateLimit(object):
             self.tag, self.dt, self.dt_ok )
 
 class LogLimit(RateLimit):
-    def __init__(self, logger, *a, limit=1):
+    def __init__(self, logger, *a, limit=DEFAULT_RATE_LIMIT):
         self.logger = logger
         self.format = a[0]
         super(LogLimit, self).__init__('|'.join(a), limit=limit)
