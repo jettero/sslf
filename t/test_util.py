@@ -11,9 +11,9 @@ def test_attrdict():
 
 def test_ratelimit():
     for i in range(10):
-        time.sleep(0.1)
         with u.RateLimit('10-test', limit=0.2) as rl:
-            assert rl == (i%2 == 0)
+            assert bool(rl) == (i%2 == 0)
+        time.sleep(0.1)
 
 def test_loglimit():
     class mylogger(object):
@@ -27,9 +27,14 @@ def test_loglimit():
     log = mylogger(c)
 
     for i in range(10):
-        time.sleep(0.1)
         with u.LogLimit(log, 'test mod(i,2)={}', limit=0.2) as ll:
             ll.debug( i%2 )
-    
+        time.sleep(0.1)
+
     assert c['test mod(i,2)=0'] == 5
     assert c['test mod(i,2)=1'] == 0
+
+    for i in ('test-%s', ('test-%s',), ('test-%s','two')):
+        ll = u.LogLimit(log, i)
+        assert ll.tag == str(i)
+        assert ll.format == i[0] if isinstance(i, tuple) else i

@@ -21,22 +21,26 @@ class RateLimit(object):
     def dt_ok(self):
         return self.dt >= self.limit
 
-    def __enter__(self):
+    def __bool__(self):
         return self.dt_ok
+
+    def __enter__(self):
+        return self
 
     def __exit__(self, e_type, e_val, e_tb):
         if self.dt_ok:
             self.limits[self.tag] = time.time()
         # returning nothing tells with() to re-raise whatever exception was received
 
+    def __repr__(self):
+        return "{}( tag={}, dt={}, ok={} )".format( self.__class__.__name__,
+            self.tag, self.dt, self.dt_ok )
+
 class LogLimit(RateLimit):
     def __init__(self, logger, format, limit=300):
         self.logger = logger
-        self.format = format
-        super(LogLimit, self).__init__('LL-'+format, limit=limit)
-
-    def __enter__(self):
-        return self
+        self.format = format[0] if isinstance(format, (list,tuple,)) else format
+        super(LogLimit, self).__init__(str(format), limit=limit)
 
     def debug(self, *a, **kw):
         if self.dt_ok:
