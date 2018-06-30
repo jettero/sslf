@@ -6,9 +6,11 @@ import dateutil.parser
 import time
 from SplunkSuperLightForwarder.meta import MetaData
 from SplunkSuperLightForwarder.re   import ReEngine
-from SplunkSuperLightForwarder.util import AttrDict
+from SplunkSuperLightForwarder.util import AttrDict, LogLimit
 
 log = logging.getLogger('linesReader')
+
+LOG_RLIMIT = 60
 
 class Sig(object):
     def __init__(self, h='', b=0):
@@ -69,10 +71,10 @@ class Reader(MetaData):
                 with open(self.path, 'r') as fh:
                     b = fh.read(sb)
             except IOError as e:
-                log.debug("gen_sig(%s): %s", self.path, e)
+                with LogLimit(log, 'gen_sig(%s): %s', self.path, limit=LOG_RLIMIT) as ll:
+                    ll.debug(self.path, e)
                 self._reset()
                 b = ''
-
         else: b = ''
 
         h = hashlib.md5(b.encode()).hexdigest()
@@ -109,7 +111,8 @@ class Reader(MetaData):
         try:
             return os.stat(self.path)
         except IOError as e:
-            log.debug("stat(%s): %s", self.path,e)
+            with LogLimit(log, 'stat(%s): %s', self.path, limit=LOG_RLIMIT) as ll:
+                ll.debug(self.path, e)
             self._reset()
         return posix.stat_result( (0,)*10 )
 
@@ -147,5 +150,6 @@ class Reader(MetaData):
                     yield evr
                     self._save_stat( fh.tell() )
         except IOError as e:
-            log.error("read(%s): %s", self.path, e)
+            with LogLimit(log, 'read(%s): %s', self.path, limit=LOG_RLIMIT) as ll:
+                ll.debug(self.path, e)
         self.save()
