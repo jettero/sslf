@@ -28,8 +28,10 @@ class RateLimit(object):
     def __enter__(self):
         return self
 
-    def __exit__(self, e_type, e_val, e_tb):
-        if self.dt_ok:
+    def __exit__(self, e_type=None, e_val=None, e_tb=None):
+        if self.dt_ok and not (e_type or e_val or e_tb):
+            # only increment the tag time iff dt is ok and
+            # there's no exception bringing us here
             self.limits[self.tag] = time.time()
         # returning nothing tells with() to re-raise whatever exception was received
 
