@@ -34,7 +34,7 @@ def test_loglimit():
     assert c['test mod(i,2)=0'] == 5
     assert c['test mod(i,2)=1'] == 0
 
-    for i in ('test-%s', ('test-%s',), ('test-%s','two')):
-        ll = u.LogLimit(log, i)
-        assert ll.tag == str(i)
-        assert ll.format == i[0] if isinstance(i, tuple) else i
+    for i in (('test-%s',), ('test-%s','two')):
+        ll = u.LogLimit(log, *i)
+        assert ll.tag == '|'.join(i)
+        assert ll.format == i[0]
