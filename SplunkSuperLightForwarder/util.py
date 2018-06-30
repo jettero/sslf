@@ -37,7 +37,7 @@ class RateLimit(object):
             self.tag, self.dt, self.dt_ok )
 
 class LogLimit(RateLimit):
-    def __init__(self, logger, *a, limit=300):
+    def __init__(self, logger, *a, limit=5):
         self.logger = logger
         self.format = a[0]
         super(LogLimit, self).__init__('|'.join(a), limit=limit)
