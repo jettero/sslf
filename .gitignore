@@ -1,6 +1,7 @@
 __pycache__
 .eggs
 .pytest_cache
+*.pyc
 *.egg-info
 file
 t/meta
