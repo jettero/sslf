@@ -151,7 +151,7 @@ class Daemon(daemonize.Daemonize):
 
     def start(self):
         if self.daemonize:
-            raise Exception("wtf")
+            raise Exception("wtf") # XXX: why did we wtf this section?
             fh = logging.FileHandler(self.log_file, 'a')
             fh.setLevel(logging.INFO)
             self.logger.addHandler(fh)
