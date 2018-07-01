@@ -43,8 +43,11 @@ class Daemon(daemonize.Daemonize):
 
     def __init__(self, *a, **kw):
         self._grok_args(kw, with_errors=True)
-        self.parse_args(a)
-        self.read_config()
+
+        # NOTE: this is kinda dumb, but makes sense in the right narative
+        self.parse_args(a) # look for --config-file in cmdline args
+        self.read_config() # read the config file, with possible --config-file override
+        self.parse_args(a) # parse args again to make sure they override configs when given
 
         super(Daemon, self).__init__(app="SSLF", pid=self.pid_file, action=self.loop, logger=self.logger)
 
@@ -169,7 +172,6 @@ class Daemon(daemonize.Daemonize):
 
     def start(self):
         if self.daemonize:
-            raise Exception("wtf") # XXX: why did we wtf this section?
             fh = logging.FileHandler(self.log_file, 'a')
             fh.setLevel(logging.INFO)
             self.logger.addHandler(fh)
