@@ -34,6 +34,8 @@ class Daemon(daemonize.Daemonize):
     sourcetype = None
     logger = logging.getLogger('SSLF')
 
+    _path_config = dict()
+
     _fields = (
         'verbose', 'daemonize', 'config_file', 'meta_data_dir',
         'hec','token','index','sourcetype', 'log_file', 'pid_file',
@@ -67,19 +69,34 @@ class Daemon(daemonize.Daemonize):
             elif with_errors:
                 raise Exception("{} is not a valid config argument".format(k))
 
+    def add_path_config(self, path, args):
+        if not path.startswith('/'):
+            return
+        self._path_config[path] = args
+
+    def update_path_config(self):
+        # NOTE: we want for the module lazy load to happen *after* we set up
+        # daemon logging therefore, we store paths during config parse and
+        # process them here in this later stage.
+        # XXX: later, we should check to see if anything changed before tearing
+        # everything down and rebuilding; perhaps during config re-parsing
+        self.paths = dict()
+        for p in self._path_config:
+            self._grok_path(p, self._path_config[p])
+
     def _grok_path(self, path, args):
         if not path.startswith('/'):
             return
-        if self.paths is None:
-            self.paths = dict()
         pv = self.paths.get(path)
         if not pv:
             pv = self.paths[path] = AttrDict()
         pv.update(args)
+
         module = pv.pop('reader', 'lines')
         clazz  = pv.pop('class', 'Reader')
         if '.' not in module:
             module = 'SplunkSuperLightForwarder.reader.' + module
+
         try:
             m = importlib.import_module(module)
             c = getattr(m, clazz)
@@ -124,7 +141,7 @@ class Daemon(daemonize.Daemonize):
             if k == 'sslf':
                 self._grok_args(config[k])
             else:
-                self._grok_path(k, config[k])
+                self.add_path_config(k, config[k])
 
     class HECEvent(AttrDict):
         def send(self):
@@ -140,6 +157,7 @@ class Daemon(daemonize.Daemonize):
                         source=evr.source, time=evr.time, fields=evr.fields)
 
     def loop(self):
+        self.update_path_config()
         while True:
             for ev in self.step():
                 self.logger.debug("sending event (%s)", ev.hec)
