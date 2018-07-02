@@ -21,7 +21,6 @@ def _dictify_args(args):
     return args
 
 class Daemon(daemonize.Daemonize):
-    log_file = '/var/log/sslf.log'
     pid_file = '/var/run/sslf.pid'
     verbose = False
     daemonize = False
@@ -34,11 +33,18 @@ class Daemon(daemonize.Daemonize):
     sourcetype = None
     logger = logging.getLogger('SSLF')
 
+    log_level     = 'info'
+    log_level_cli = 'debug'
+    log_file      = '/var/log/sslf.log'
+    log_fmt_cli   = '%(name)s [%(process)d] %(levelname)s: %(message)s'
+    log_fmt       = '%(asctime)s ' + log_fmt_cli
+
     _path_config = dict()
 
     _fields = (
         'verbose', 'daemonize', 'config_file', 'meta_data_dir',
-        'hec','token','index','sourcetype', 'log_file', 'pid_file',
+        'hec','token','index','sourcetype', 'pid_file',
+        'log_level', 'log_level_cli', 'log_file', 'log_fmt_cli', 'log_fmt',
     )
 
     def __init__(self, *a, **kw):
@@ -127,6 +133,8 @@ class Daemon(daemonize.Daemonize):
         parser = argparse.ArgumentParser(description="this is program") # options and program name are automatic
         parser.add_argument('-v', '--verbose', action='store_true')
         parser.add_argument('-f', '--daemonize', action='store_true', help="fork and become a daemon")
+        parser.add_argument('-l', '--log-level', type=str, default=self.log_level,
+            help="daemon logging level (default: %(default)s)")
         parser.add_argument('-c', '--config-file', type=str, default=self.config_file,
             help="config file (default: %(default)s)")
         parser.add_argument('-m', '--meta-data-dir', type=str, default=self.meta_data_dir,
@@ -170,16 +178,51 @@ class Daemon(daemonize.Daemonize):
                     self.logger.error("error sending event (%s): %s", ev.hec, e)
             time.sleep(1)
 
-    def start(self):
-        if self.daemonize:
-            fh = logging.FileHandler(self.log_file, 'a')
-            fh.setLevel(logging.INFO)
+    def numerical_log_level(self, x=None):
+        if x is None:
+            x = self.log_level
+        h = logging.Handler()
+        try:
+            h.setLevel(int(x))
+            return h.level
+        except ValueError:
+            try:
+                # logging.DEBUG, debug, DEBUG, etc
+                h.setLevel(x.upper().strip().split('.')[-1])
+                return h.level
+            except ValueError:
+                raise ValueError(
+                    "log_level='{}' is not understood (even with help) by python logging".format(self.log_level))
+        # can we get here?? no?
+        return logging.DEBUG
+
+    def setup_logging(self, fmt=None, level=None, file=None):
+        if self.daemonize or file is not None:
+            fm = logging.Formatter(self.log_fmt if fmt is None else fmt, datefmt='%Y-%m-%d %H:%M:%S')
+            fh = logging.FileHandler(self.log_file if file is None else file, 'a')
+            fh.setFormatter(fm)
+            fh.setLevel(self.numerical_log_level(self.log_level if level is None else level))
             self.logger.addHandler(fh)
             self.keep_fds = [ fh.stream.fileno() ]
+        else:
+            logging.basicConfig(
+                level=self.numerical_log_level(
+                    self.log_level_cli if level is None else level),
+                format=self.log_fmt_cli if fmt is None else fmt)
+
+    def start(self):
+        # Mostly people use logging.DEBUG and logging.INFO to setLevel() and
+        # level=blah ... logging internally populates these constants with
+        # numbers but internally also has a translator for going number->name
+        # and name->number; it just has to be upper case.
+
+        self.setup_logging()
+
+        if self.daemonize:
             super(Daemon, self).start()
+
         else:
             import sys
-            logging.basicConfig(level=logging.DEBUG)
             signal.signal(signal.SIGINT, lambda sig,frame: sys.exit(0))
             self.loop()
 
