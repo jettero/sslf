@@ -197,6 +197,12 @@ class Daemon(daemonize.Daemonize):
         return logging.DEBUG
 
     def setup_logging(self, fmt=None, level=None, file=None):
+        try:
+            if self._logging_already_set_up is True:
+                raise Exception("TODO: logging reconfigure")
+        except: pass
+        self._logging_already_set_up = True
+
         if self.daemonize or file is not None:
             fm = logging.Formatter(self.log_fmt if fmt is None else fmt, datefmt='%Y-%m-%d %H:%M:%S')
             fh = logging.FileHandler(self.log_file if file is None else file, 'a')
@@ -210,6 +216,16 @@ class Daemon(daemonize.Daemonize):
                     self.log_level_cli if level is None else level),
                 format=self.log_fmt_cli if fmt is None else fmt)
 
+    def kill_other(self):
+        try:
+            with open(self.pid_file, 'r') as fh:
+                pid = int( fh.read().strip() )
+            self.logger.warning('sending SIGTERM to other sslf pid=%d', pid)
+            os.kill(pid, signal.SIGTERM)
+            time.sleep(0.1)
+        except FileNotFoundError: pass
+        except ValueError: pass
+
     def start(self):
         # Mostly people use logging.DEBUG and logging.INFO to setLevel() and
         # level=blah ... logging internally populates these constants with
@@ -219,6 +235,8 @@ class Daemon(daemonize.Daemonize):
         self.setup_logging()
 
         if self.daemonize:
+            self.kill_other()
+            self.logger.warning("becoming a daemon")
             super(Daemon, self).start()
 
         else:
