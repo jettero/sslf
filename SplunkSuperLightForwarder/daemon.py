@@ -3,15 +3,15 @@
 import importlib
 import argparse
 import configparser
-import os
+import os, sys
 import logging
 import time
 import signal
 import daemonize
 import collections
 
-from SplunkSuperLightForwarder.hec import HEC
-from SplunkSuperLightForwarder.util import AttrDict
+from SplunkSuperLightForwarder.returner.hec import HEC
+from SplunkSuperLightForwarder.util import AttrDict, RateLimit
 
 def _dictify_args(args):
     if isinstance(args, argparse.Namespace):
@@ -47,12 +47,24 @@ class Daemon(daemonize.Daemonize):
     )
 
     def __init__(self, *a, **kw):
-        self._grok_args(kw, with_errors=True)
+        try:
+            self._grok_args(kw, with_errors=True)
 
-        # NOTE: this is kinda dumb, but makes sense in the right narative
-        self.parse_args(a) # look for --config-file in cmdline args
-        self.read_config() # read the config file, with possible --config-file override
-        self.parse_args(a) # parse args again to make sure they override configs when given
+            # NOTE: this is kinda dumb, but makes sense in the right narative
+            self.parse_args(a) # look for --config-file in cmdline args
+            self.read_config() # read the config file, with possible --config-file override
+            self.parse_args(a) # parse args again to make sure they override configs when given
+        except Exception as e:
+            print("daemon configuration failure:", e)
+            sys.exit(1)
+
+        try:
+            self.setup_logging()
+        except Exception as e:
+            print("logging configuration failed:", e)
+            sys.exit(1)
+
+        self.update_path_config() # no need to trap this one, it should go to logging
 
         super(Daemon, self).__init__(app="SSLF", pid=self.pid_file, action=self.loop, logger=self.logger)
 
@@ -155,18 +167,11 @@ class Daemon(daemonize.Daemonize):
             else:
                 self.add_path_config(k, config[k])
 
-    class HECEvent(AttrDict):
-        def send(self):
-            hec = self.pop('hec')
-            event = self.pop('event')
-            hec.send_event( event, **self )
-
     def step(self):
         for pv in self.paths.values():
             if pv.reader.ready:
                 for evr in pv.reader.read():
-                    yield self.HECEvent(hec=pv.hec, event=evr.event,
-                        source=evr.source, time=evr.time, fields=evr.fields)
+                    yield pv.hec.build_event(evr)
 
     def loop(self):
         while True:
@@ -223,6 +228,8 @@ class Daemon(daemonize.Daemonize):
         for i in logging.root.handlers:
             i.addFilter(f)
 
+        self.logger.info("logging configured")
+
     def kill_other(self):
         try:
             with open(self.pid_file, 'r') as fh:
@@ -234,9 +241,6 @@ class Daemon(daemonize.Daemonize):
         except ValueError: pass
 
     def start(self):
-        self.setup_logging()
-        self.update_path_config()
-
         if self.daemonize:
             self.kill_other()
             self.logger.warning("becoming a daemon")

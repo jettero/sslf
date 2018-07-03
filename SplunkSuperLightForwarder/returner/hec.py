@@ -3,9 +3,17 @@ import os, socket, datetime, urllib3, json, time
 from urllib3.exceptions import InsecureRequestWarning
 import logging
 
+from SplunkSuperLightForwarder.util import AttrDict
+
 log = logging.getLogger('HEC')
 
 HOSTNAME = socket.gethostname()
+
+class HECEvent(AttrDict):
+    def send(self):
+        hec = self.pop('hec')
+        event = self.pop('event')
+        hec.send_event( event, **self )
 
 class MyJSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -26,6 +34,10 @@ class MySplunkHEC(object):
     }
 
     path = "/services/collector/event"
+
+    def build_event(self, evr): # evr is an event reader output object
+        return HECEvent(hec=self, event=evr.event,
+            source=evr.source, time=evr.time, fields=evr.fields)
 
     def __init__(self, hec_url, token, verify_ssl=True, **base_payload):
         self.token  = token
