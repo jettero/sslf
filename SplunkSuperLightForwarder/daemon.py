@@ -212,6 +212,12 @@ class Daemon(daemonize.Daemonize):
         else:
             logging.basicConfig(level=self.log_level_n, format=self.log_fmt_cli if fmt is None else fmt)
 
+        # TODO: consider adding filter options to config
+        # urllib3.connectionpool tries to piggyback my debug logs without this
+        f = lambda r: 'SplunkSuperLightForwarder' in r.pathname
+        for i in logging.root.handlers:
+            i.addFilter(f)
+
     def kill_other(self):
         try:
             with open(self.pid_file, 'r') as fh:
