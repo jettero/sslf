@@ -34,7 +34,6 @@ class Daemon(daemonize.Daemonize):
     logger = logging.getLogger('SSLF')
 
     log_level     = 'info'
-    log_level_cli = 'debug'
     log_file      = '/var/log/sslf.log'
     log_fmt_cli   = '%(name)s [%(process)d] %(levelname)s: %(message)s'
     log_fmt       = '%(asctime)s ' + log_fmt_cli
@@ -44,7 +43,7 @@ class Daemon(daemonize.Daemonize):
     _fields = (
         'verbose', 'daemonize', 'config_file', 'meta_data_dir',
         'hec','token','index','sourcetype', 'pid_file',
-        'log_level', 'log_level_cli', 'log_file', 'log_fmt_cli', 'log_fmt',
+        'log_level', 'log_file', 'log_fmt_cli', 'log_fmt',
     )
 
     def __init__(self, *a, **kw):
@@ -81,7 +80,9 @@ class Daemon(daemonize.Daemonize):
     def add_path_config(self, path, args):
         if not path.startswith('/'):
             return
-        self._path_config[path] = args
+        if path not in self._path_config:
+            self._path_config[path] = dict()
+        self._path_config[path].update(args)
 
     def update_path_config(self):
         # NOTE: we want for the module lazy load to happen *after* we set up
@@ -168,7 +169,6 @@ class Daemon(daemonize.Daemonize):
                         source=evr.source, time=evr.time, fields=evr.fields)
 
     def loop(self):
-        self.update_path_config()
         while True:
             for ev in self.step():
                 self.logger.debug("sending event (%s)", ev.hec)
@@ -178,17 +178,16 @@ class Daemon(daemonize.Daemonize):
                     self.logger.error("error sending event (%s): %s", ev.hec, e)
             time.sleep(1)
 
-    def numerical_log_level(self, x=None):
-        if x is None:
-            x = self.log_level
+    @property
+    def log_level_n(self):
         h = logging.Handler()
         try:
-            h.setLevel(int(x))
+            h.setLevel(int(self.log_level))
             return h.level
         except ValueError:
             try:
                 # logging.DEBUG, debug, DEBUG, etc
-                h.setLevel(x.upper().strip().split('.')[-1])
+                h.setLevel(self.log_level.upper().strip().split('.')[-1])
                 return h.level
             except ValueError:
                 raise ValueError(
@@ -207,14 +206,11 @@ class Daemon(daemonize.Daemonize):
             fm = logging.Formatter(self.log_fmt if fmt is None else fmt, datefmt='%Y-%m-%d %H:%M:%S')
             fh = logging.FileHandler(self.log_file if file is None else file, 'a')
             fh.setFormatter(fm)
-            fh.setLevel(self.numerical_log_level(self.log_level if level is None else level))
+            self.logger.setLevel(self.log_level_n)
             self.logger.addHandler(fh)
             self.keep_fds = [ fh.stream.fileno() ]
         else:
-            logging.basicConfig(
-                level=self.numerical_log_level(
-                    self.log_level_cli if level is None else level),
-                format=self.log_fmt_cli if fmt is None else fmt)
+            logging.basicConfig(level=self.log_level_n, format=self.log_fmt_cli if fmt is None else fmt)
 
     def kill_other(self):
         try:
@@ -233,6 +229,7 @@ class Daemon(daemonize.Daemonize):
         # and name->number; it just has to be upper case.
 
         self.setup_logging()
+        self.update_path_config()
 
         if self.daemonize:
             self.kill_other()
