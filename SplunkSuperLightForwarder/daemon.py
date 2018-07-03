@@ -180,6 +180,11 @@ class Daemon(daemonize.Daemonize):
 
     @property
     def log_level_n(self):
+        # Mostly people use logging.DEBUG and logging.INFO to setLevel() and
+        # level=blah ... logging internally populates these constants with
+        # numbers but internally also has a translator for going number->name
+        # and name->number; it just has to be upper case.
+
         h = logging.Handler()
         try:
             h.setLevel(int(self.log_level))
@@ -229,11 +234,6 @@ class Daemon(daemonize.Daemonize):
         except ValueError: pass
 
     def start(self):
-        # Mostly people use logging.DEBUG and logging.INFO to setLevel() and
-        # level=blah ... logging internally populates these constants with
-        # numbers but internally also has a translator for going number->name
-        # and name->number; it just has to be upper case.
-
         self.setup_logging()
         self.update_path_config()
 
