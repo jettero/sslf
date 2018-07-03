@@ -176,11 +176,11 @@ class Daemon(daemonize.Daemonize):
     def loop(self):
         while True:
             for ev in self.step():
-                self.logger.debug("sending event (%s)", ev.hec)
+                self.logger.debug("sending event to %s", ev.hec)
                 try:
                     ev.send()
                 except Exception as e:
-                    self.logger.error("error sending event (%s): %s", ev.hec, e)
+                    self.logger.error("error sending event to %s: %s", ev.hec, e)
             time.sleep(1)
 
     @property
@@ -228,7 +228,7 @@ class Daemon(daemonize.Daemonize):
         for i in logging.root.handlers:
             i.addFilter(f)
 
-        self.logger.info("logging configured")
+        self.logger.info("logging configured level=%s", self.log_level)
 
     def kill_other(self):
         try:

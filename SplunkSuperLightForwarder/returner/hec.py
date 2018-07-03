@@ -11,9 +11,16 @@ HOSTNAME = socket.gethostname()
 
 class HECEvent(AttrDict):
     def send(self):
+        # don't send these to hec.send_event or it'll send them in the payload
         hec = self.pop('hec')
         event = self.pop('event')
-        hec.send_event( event, **self )
+        try:
+            hec.send_event( event, **self )
+        except:
+            # put these back for error reporting purposes
+            self.hec = hec
+            self.event = event
+            raise
 
 class MyJSONEncoder(json.JSONEncoder):
     def default(self, o):
