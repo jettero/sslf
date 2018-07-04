@@ -146,7 +146,12 @@ class Daemon(daemonize.Daemonize):
             log.warn("couldn't figure out hec settings for path=%s, skipping", path)
             return
 
-        sourcetype = pv.get('sourcetype', self.sourcetype or 'sslf:{}'.format(pv['reader'].__class__.__name__))
+        sourcetype = pv.get('sourcetype', self.sourcetype)
+        if not sourcetype:
+            try:
+                sourcetype = pv['reader'].default_sourcetype
+            except:
+                sourcetype = 'sslf:' + module.split('.')[-1]
         pv['hec'] = HEC(
             hec_url, token, sourcetype=sourcetype, index=index,
             # TODO: surely some people will want to verify this, add option,

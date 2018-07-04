@@ -9,7 +9,7 @@ from SplunkSuperLightForwarder.re     import ReEngine
 from SplunkSuperLightForwarder.util   import AttrDict, LogLimit
 from SplunkSuperLightForwarder.reader import LOG_RLIMIT
 
-log = logging.getLogger('linesReader')
+log = logging.getLogger('SSLF:lines')
 
 class Sig(object):
     def __init__(self, h='', b=0):
@@ -32,6 +32,8 @@ class Sig(object):
         return (self.h, self.b)
 
 class Reader(MetaData):
+    default_sourcetype = 'sslf:lines'
+
     def __init__(self, path, meta_data_dir=None, signature_bytes=1024, config=None):
         self._reset()
         self.sbytes = signature_bytes
