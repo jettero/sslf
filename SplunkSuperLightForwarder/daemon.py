@@ -141,7 +141,12 @@ class Daemon(daemonize.Daemonize):
         hec_url = pv.get('hec', self.hec)
         token = pv.get('token', self.token)
         index = pv.get('index', self.index or 'tmp')
-        sourcetype = pv.get('sourcetype', self.sourcetype or 'sslf:{}'.format(reader.__class__.__name__))
+
+        if not hec_url or not token or not index:
+            log.warn("couldn't figure out hec settings for path=%s, skipping", path)
+            return
+
+        sourcetype = pv.get('sourcetype', self.sourcetype or 'sslf:{}'.format(pv['reader'].__class__.__name__))
         pv['hec'] = HEC(
             hec_url, token, sourcetype=sourcetype, index=index,
             # TODO: surely some people will want to verify this, add option,
@@ -164,6 +169,8 @@ class Daemon(daemonize.Daemonize):
         self._grok_args(args)
 
     def read_config(self):
+        if not self.config_file:
+            return
         config = configparser.ConfigParser()
         try:
             log.debug("parsing config_file=%s", self.config_file)
