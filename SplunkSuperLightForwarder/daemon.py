@@ -13,6 +13,8 @@ import collections
 from SplunkSuperLightForwarder.returner.hec import HEC
 from SplunkSuperLightForwarder.util import AttrDict, RateLimit
 
+log = logging.getLogger("SSLF")
+
 def _dictify_args(args):
     if isinstance(args, argparse.Namespace):
         return args.__dict__
@@ -31,7 +33,7 @@ class Daemon(daemonize.Daemonize):
     token = None
     index = None
     sourcetype = None
-    logger = logging.getLogger('SSLF')
+    logger = log
 
     log_level     = 'info'
     log_file      = '/var/log/sslf.log'
@@ -66,7 +68,7 @@ class Daemon(daemonize.Daemonize):
 
         self.update_path_config() # no need to trap this one, it should go to logging
 
-        super(Daemon, self).__init__(app="SSLF", pid=self.pid_file, action=self.loop, logger=self.logger)
+        super(Daemon, self).__init__(app="SSLF", pid=self.pid_file, action=self.loop, logger=log)
 
     def _barf_settings(self):
         ret = dict()
@@ -107,6 +109,7 @@ class Daemon(daemonize.Daemonize):
             self._grok_path(p, self._path_config[p])
 
     def _grok_path(self, path, args):
+        log.debug("trying to figure out config path={}".format(path))
         if not path.startswith('/'):
             return
         pv = self.paths.get(path)
@@ -124,10 +127,10 @@ class Daemon(daemonize.Daemonize):
             c = getattr(m, clazz)
             o = c(path, meta_data_dir=self.meta_data_dir, config=pv)
             pv['reader'] = o
-            self.logger.info("added %s to watchlist using %s", path, o)
+            log.info("added %s to watchlist using %s", path, o)
         except ModuleNotFoundError as e:
             self.paths.pop(path, None)
-            self.logger.error("couldn't find {1} in {0}: {2}".format(module,clazz,e))
+            log.error("couldn't find {1} in {0}: {2}".format(module,clazz,e))
             return
 
         hec_url = pv.get('hec', self.hec)
@@ -158,9 +161,10 @@ class Daemon(daemonize.Daemonize):
     def read_config(self):
         config = configparser.ConfigParser()
         try:
+            log.debug("parsing config_file=%s", self.config_file)
             config.read(self.config_file)
         except Exception as e:
-            self.logger.error("couldn't read config file {}: {}".format(self.config_file, e))
+            log.error("couldn't read config file {}: {}".format(self.config_file, e))
         for k in config:
             if k == 'sslf':
                 self._grok_args(config[k])
@@ -176,11 +180,11 @@ class Daemon(daemonize.Daemonize):
     def loop(self):
         while True:
             for ev in self.step():
-                self.logger.debug("sending event to %s", ev.hec)
+                log.debug("sending event to %s", ev.hec)
                 try:
                     ev.send()
                 except Exception as e:
-                    self.logger.error("error sending event to %s: %s", ev.hec, e)
+                    log.error("error sending event to %s: %s", ev.hec, e)
             time.sleep(1)
 
     @property
@@ -216,8 +220,8 @@ class Daemon(daemonize.Daemonize):
             fm = logging.Formatter(self.log_fmt if fmt is None else fmt, datefmt='%Y-%m-%d %H:%M:%S')
             fh = logging.FileHandler(self.log_file if file is None else file, 'a')
             fh.setFormatter(fm)
-            self.logger.setLevel(self.log_level_n)
-            self.logger.addHandler(fh)
+            log.setLevel(self.log_level_n)
+            log.addHandler(fh)
             self.keep_fds = [ fh.stream.fileno() ]
         else:
             logging.basicConfig(level=self.log_level_n, format=self.log_fmt_cli if fmt is None else fmt)
@@ -228,13 +232,13 @@ class Daemon(daemonize.Daemonize):
         for i in logging.root.handlers:
             i.addFilter(f)
 
-        self.logger.info("logging configured level=%s", self.log_level)
+        log.info("logging configured level=%s", self.log_level)
 
     def kill_other(self):
         try:
             with open(self.pid_file, 'r') as fh:
                 pid = int( fh.read().strip() )
-            self.logger.warning('sending SIGTERM to other sslf pid=%d', pid)
+            log.warn('sending SIGTERM to other sslf pid=%d', pid)
             os.kill(pid, signal.SIGTERM)
             time.sleep(0.1)
         except FileNotFoundError: pass
@@ -243,7 +247,7 @@ class Daemon(daemonize.Daemonize):
     def start(self):
         if self.daemonize:
             self.kill_other()
-            self.logger.warning("becoming a daemon")
+            log.warn("becoming a daemon")
             super(Daemon, self).start()
 
         else:
