@@ -22,6 +22,12 @@ def _dictify_args(args):
         return dict(args)
     return args
 
+class DaemonConfig(Exception):
+    pass
+
+class LoggingConfig(Exception):
+    pass
+
 class Daemon(daemonize.Daemonize):
     pid_file = '/var/run/sslf.pid'
     verbose = False
@@ -57,14 +63,12 @@ class Daemon(daemonize.Daemonize):
             self.read_config() # read the config file, with possible --config-file override
             self.parse_args(a) # parse args again to make sure they override configs when given
         except Exception as e:
-            print("daemon configuration failure:", e)
-            sys.exit(1)
+            raise DaemonConfig("daemon configuration failure: {}".format(e))
 
         try:
             self.setup_logging()
         except Exception as e:
-            print("logging configuration failed:", e)
-            sys.exit(1)
+            raise LoggingConfig("logging configuration failed: {}".format(e))
 
         self.update_path_config() # no need to trap this one, it should go to logging
 
@@ -258,7 +262,13 @@ class Daemon(daemonize.Daemonize):
 def setup(*a, **kw):
     if len(a) == 1 and isinstance(a[0], (list,tuple,)):
         a = a[0]
-    return Daemon(*a, **kw)
+    try:
+        return Daemon(*a, **kw)
+    except Exception as e:
+        if isinstance(e, (DaemonConfig, LoggingConfig)):
+            print("fatal error in daemon setup:", e)
+            sys.exit(1)
+        raise
 
 def run(*a, **kw):
     return setup(*a, **kw).start()
