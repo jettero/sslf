@@ -1,30 +1,39 @@
 import SplunkSuperLightForwarder
 import sys
+import logging
 
-def test_setup():
+log = logging.getLogger('test-config')
+
+def test_setup(nc_config):
     sys.argv = [ sys.argv[0] ]
 
-    sslf = SplunkSuperLightForwarder.setup()
+    log.debug("-----=: setup()")
+    sslf = nc_config() # Daemon.config_file = None; Daemon().update_config()
     assert sslf.config_file == SplunkSuperLightForwarder.Daemon.config_file
 
-    sslf = SplunkSuperLightForwarder.setup('-c', 't/sslf.1')
+    # note that these config files aren't meant to exist
+    log.debug("-----=: setup(-c t/sslf.1)")
+    sslf = nc_config('-c', 't/sslf.1')
     assert sslf.config_file == 't/sslf.1'
 
-    sslf = SplunkSuperLightForwarder.setup('-c t/sslf.2'.split())
+    log.debug("-----=: setup(-c t/sslf.2)")
+    sslf = nc_config('-c', 't/sslf.2')
     assert sslf.config_file == 't/sslf.2'
 
-    sslf = SplunkSuperLightForwarder.setup(config_file='t/sslf.3')
+    log.debug("-----=: setup(config_file t/sslf.3)")
+    sslf = nc_config(config_file='t/sslf.3')
     assert sslf.config_file == 't/sslf.3'
 
+    log.debug("-----=: setup(config=t/sslf.3) --> fail")
     fail = None
-    try: sslf = SplunkSuperLightForwarder.setup(config='t/sslf.3')
+    try: sslf = nc_config(config='t/sslf.3')
     except Exception as e:
         fail = e
     assert 'valid config' in str(fail)
 
-def test_read_file():
-    sslf = SplunkSuperLightForwarder.setup(config_file='t/test1.conf')
-    assert sslf.config_file == 't/test1.conf'
-    assert sslf.hec == 'https://localhost:54321/'
-    assert set(sslf.paths.keys()) == set(['/tmp/funny-little.log'])
-    assert set(sslf.paths.get('/tmp/funny-little.log',{}).keys()) == set(['re_f1', 'reader', 'hec'])
+# def test_read_file():
+#     sslf = SplunkSuperLightForwarder.setup(config_file='t/test1.conf')
+#     assert sslf.config_file == 't/test1.conf'
+#     assert sslf.hec == 'https://localhost:54321/'
+#     assert set(sslf.paths.keys()) == set(['/tmp/funny-little.log'])
+#     assert set(sslf.paths.get('/tmp/funny-little.log',{}).keys()) == set(['re_f1', 'reader', 'hec'])

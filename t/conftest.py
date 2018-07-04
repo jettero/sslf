@@ -40,3 +40,14 @@ def mdir(request):
     request.addfinalizer(fin)
     fin()
     return 't/meta'
+
+@pytest.fixture
+def nc_config():# no-[default]-config config()
+    import SplunkSuperLightForwarder
+    orig = SplunkSuperLightForwarder.Daemon.config_file
+    SplunkSuperLightForwarder.Daemon.config_file = ''
+    def _s(*a, **kw):
+        return SplunkSuperLightForwarder.Daemon(*a, **kw).update_path_config()
+    yield _s
+    SplunkSuperLightForwarder.Daemon.config_file = orig
+
