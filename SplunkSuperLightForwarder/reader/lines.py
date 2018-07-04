@@ -4,13 +4,12 @@ import hashlib
 import logging
 import dateutil.parser
 import time
-from SplunkSuperLightForwarder.meta import MetaData
-from SplunkSuperLightForwarder.re   import ReEngine
-from SplunkSuperLightForwarder.util import AttrDict, LogLimit
+from SplunkSuperLightForwarder.meta   import MetaData
+from SplunkSuperLightForwarder.re     import ReEngine
+from SplunkSuperLightForwarder.util   import AttrDict, LogLimit
+from SplunkSuperLightForwarder.reader import LOG_RLIMIT
 
 log = logging.getLogger('linesReader')
-
-LOG_RLIMIT = 60
 
 class Sig(object):
     def __init__(self, h='', b=0):
@@ -53,6 +52,7 @@ class Reader(MetaData):
                 if k.startswith('re_'):
                     patterns[ k[3:] ] = config[k]
         self._re = ReEngine(**patterns)
+        log.debug("{} online".format(self))
 
     def __repr__(self):
         return "lines.Reader({}[{}])".format(self.path, self.tell)

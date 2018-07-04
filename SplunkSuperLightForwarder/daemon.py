@@ -238,11 +238,11 @@ class Daemon(daemonize.Daemonize):
         else:
             logging.basicConfig(level=self.log_level_n, format=self.log_fmt_cli if fmt is None else fmt)
 
-        # TODO: consider adding filter options to config
-        # urllib3.connectionpool tries to piggyback my debug logs without this
-        f = lambda r: 'SplunkSuperLightForwarder' in r.pathname
-        for i in logging.root.handlers:
-            i.addFilter(f)
+     # XXX: disabled for the moment... why are my reader.lines log.debug() messages missing??
+     #  f = lambda r: 'SplunkSuperLightForwarder' in r.pathname or 'SSLF' in r.name
+     #  for i in logging.root.handlers:
+     #      i.addFilter(f)
+     #      i.setLevel(self.log_level_n)
 
         log.info("logging configured level=%s", self.log_level)
 
