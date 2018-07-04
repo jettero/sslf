@@ -2,7 +2,7 @@ import os
 import json
 import logging
 
-log = logging.getLogger('meta-data')
+log = logging.getLogger('sslf:meta')
 
 class MetaData(object):
 

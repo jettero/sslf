@@ -5,7 +5,7 @@ import logging
 
 from SplunkSuperLightForwarder.util import AttrDict
 
-log = logging.getLogger('HEC')
+log = logging.getLogger('sslf:hec')
 
 HOSTNAME = socket.gethostname()
 

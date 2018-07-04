@@ -13,7 +13,7 @@ import collections
 from SplunkSuperLightForwarder.returner.hec import HEC
 from SplunkSuperLightForwarder.util import AttrDict, RateLimit
 
-log = logging.getLogger("SSLF")
+log = logging.getLogger("sslf")
 
 def _dictify_args(args):
     if isinstance(args, argparse.Namespace):

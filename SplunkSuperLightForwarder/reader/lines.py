@@ -9,7 +9,7 @@ from SplunkSuperLightForwarder.re     import ReEngine
 from SplunkSuperLightForwarder.util   import AttrDict, LogLimit
 from SplunkSuperLightForwarder.reader import LOG_RLIMIT
 
-log = logging.getLogger('SSLF:lines')
+log = logging.getLogger('sslf:lines')
 
 class Sig(object):
     def __init__(self, h='', b=0):

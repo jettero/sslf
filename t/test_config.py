@@ -2,7 +2,7 @@ import SplunkSuperLightForwarder
 import sys
 import logging
 
-log = logging.getLogger('test-config')
+log = logging.getLogger('sslf:test')
 
 def test_setup(nc_config):
     sys.argv = [ sys.argv[0] ]
