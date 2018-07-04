@@ -152,6 +152,7 @@ class Daemon(daemonize.Daemonize):
                 sourcetype = pv['reader'].default_sourcetype
             except:
                 sourcetype = 'sslf:' + module.split('.')[-1]
+
         pv['hec'] = HEC(
             hec_url, token, sourcetype=sourcetype, index=index,
             # TODO: surely some people will want to verify this, add option,
