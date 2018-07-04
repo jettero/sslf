@@ -69,6 +69,8 @@ class MySplunkHEC(object):
         headers = {
             'Authorization': 'Splunk ' + self.token,
             'Content-Type': 'application/json',
+            'Keep-Alive': 'timeout=100, max=1000', # one hundred seconds, 1000 requests
+            'Connection': 'Keep-Alive', # please do the needful
         }
         encoded_data = json.dumps(json_data, cls=MyJSONEncoder).encode('utf-8')
         fake_headers = headers.copy()

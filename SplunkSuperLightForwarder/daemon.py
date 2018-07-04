@@ -250,8 +250,9 @@ class Daemon(daemonize.Daemonize):
         logging.basicConfig( **bc_kw )
         self.keep_fds = [ h.stream.fileno() for h in logging.root.handlers ]
 
-        #fl = lambda r: 'SplunkSuperLightForwarder' in r.pathname or 'SSLF' in r.name
-        #for h in logging.root.handlers: h.addFilter(fl)
+        fl = lambda r: 'SplunkSuperLightForwarder' in r.pathname or 'SSLF' in r.name
+        for h in logging.root.handlers:
+            h.addFilter(fl)
 
         log.info('logging configured')
 
