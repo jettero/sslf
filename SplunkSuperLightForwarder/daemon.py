@@ -111,6 +111,7 @@ class Daemon(daemonize.Daemonize):
         self.paths = dict()
         for p in self._path_config:
             self._grok_path(p, self._path_config[p])
+        return self
 
     def _grok_path(self, path, args):
         log.debug("trying to figure out config path={}".format(path))
