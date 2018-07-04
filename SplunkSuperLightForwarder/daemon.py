@@ -72,7 +72,11 @@ class Daemon(daemonize.Daemonize):
 
         self.update_path_config() # no need to trap this one, it should go to logging
 
-        super(Daemon, self).__init__(app="SSLF", pid=self.pid_file, action=self.loop, logger=log)
+        super(Daemon, self).__init__(app="SSLF", pid=self.pid_file,
+            action=self.loop,
+            keep_fds=self.keep_fds, # have to pass this in or self.keep_fds=None, meh
+            logger=log # same
+        )
 
     def _barf_settings(self):
         ret = dict()
@@ -234,22 +238,24 @@ class Daemon(daemonize.Daemonize):
         except: pass
         self._logging_already_set_up = True
 
+        bc_kw = {
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+            'format': self.log_fmt if fmt is None else fmt,
+            'level': self.log_level_n,
+        }
+
         if self.daemonize or file is not None:
-            fm = logging.Formatter(self.log_fmt if fmt is None else fmt, datefmt='%Y-%m-%d %H:%M:%S')
-            fh = logging.FileHandler(self.log_file if file is None else file, 'a')
-            fh.setFormatter(fm)
-            log.setLevel(self.log_level_n)
-            log.addHandler(fh)
-            self.keep_fds = [ fh.stream.fileno() ]
-        else:
-            logging.basicConfig(level=self.log_level_n, format=self.log_fmt_cli if fmt is None else fmt)
+            bc_kw['filename'] = self.log_file if file is None else file
 
-        f = lambda r: 'SplunkSuperLightForwarder' in r.pathname or 'SSLF' in r.name
-        for i in logging.root.handlers:
-            i.addFilter(f)
-            i.setLevel(self.log_level_n)
+        logging.basicConfig( **bc_kw )
+        self.keep_fds = [ h.stream.fileno() for h in logging.root.handlers ]
 
-        log.info("logging configured level=%s", self.log_level)
+        #fl = lambda r: 'SplunkSuperLightForwarder' in r.pathname or 'SSLF' in r.name
+        #for h in logging.root.handlers: h.addFilter(fl)
+
+        log.info('logging configured')
+
+        return self
 
     def kill_other(self):
         try:
@@ -264,7 +270,6 @@ class Daemon(daemonize.Daemonize):
     def start(self):
         if self.daemonize:
             self.kill_other()
-            log.warn("becoming a daemon")
             super(Daemon, self).start()
 
         else:
