@@ -29,6 +29,7 @@ class LoggingConfig(Exception):
     pass
 
 class Daemon(daemonize.Daemonize):
+    filter_logs = False
     pid_file = '/var/run/sslf.pid'
     verbose = False
     daemonize = False
@@ -250,9 +251,10 @@ class Daemon(daemonize.Daemonize):
         logging.basicConfig( **bc_kw )
         self.keep_fds = [ h.stream.fileno() for h in logging.root.handlers ]
 
-        fl = lambda r: 'SplunkSuperLightForwarder' in r.pathname or 'SSLF' in r.name
-        for h in logging.root.handlers:
-            h.addFilter(fl)
+        if self.filter_logs:
+            fl = lambda r: 'SplunkSuperLightForwarder' in r.pathname or 'SSLF' in r.name
+            for h in logging.root.handlers:
+                h.addFilter(fl)
 
         log.info('logging configured')
 
