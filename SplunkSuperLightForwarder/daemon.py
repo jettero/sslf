@@ -11,7 +11,7 @@ import daemonize
 import collections
 
 from SplunkSuperLightForwarder.returner.hec import HEC
-from SplunkSuperLightForwarder.util import AttrDict, RateLimit
+from SplunkSuperLightForwarder.util import AttrDict, RateLimit, build_tzinfos
 
 log = logging.getLogger("sslf")
 
@@ -41,6 +41,7 @@ class Daemon(daemonize.Daemonize):
     index = None
     sourcetype = None
     logger = log
+    tz_load_re = '^(GMT|UTC)|^(US|Europe|Asia)/'
 
     log_level     = 'info'
     log_file      = '/var/log/sslf.log'
@@ -53,6 +54,7 @@ class Daemon(daemonize.Daemonize):
         'verbose', 'daemonize', 'config_file', 'meta_data_dir',
         'hec','token','index','sourcetype', 'pid_file',
         'log_level', 'log_file', 'log_fmt_cli', 'log_fmt',
+        'tz_load_re',
     )
 
     def __init__(self, *a, **kw):
@@ -70,6 +72,12 @@ class Daemon(daemonize.Daemonize):
             self.setup_logging()
         except Exception as e:
             raise LoggingConfig("logging configuration failed: {}".format(e))
+
+        import sre_constants
+        try:
+            build_tzinfos(self.tz_load_re)
+        except sre_constants.error as e:
+            raise DaemonConfig('error parsing tz_load_re="{}": {}'.format(self.tz_load_re, e))
 
         self.update_path_config() # no need to trap this one, it should go to logging
 
