@@ -257,13 +257,8 @@ class Daemon(daemonize.Daemonize):
             bc_kw['filename'] = self.log_file if file is None else file
 
         logging.basicConfig( **bc_kw )
-        self.keep_fds = list()
-        from io import UnsupportedOperation
-        for stream in [ h.stream for h in logging.root.handlers ]:
-            try:
-                self.keep_fds.append( stream.fileno() )
-            except UnsupportedOperation:
-                continue
+        self.keep_fds = [ h.stream.fileno() for h in logging.root.handlers
+            if isinstance(h, logging.FileHandler) ]
 
         if self.filter_logs:
             fl = lambda r: 'SplunkSuperLightForwarder' in r.pathname or 'SSLF' in r.name
