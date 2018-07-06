@@ -64,12 +64,13 @@ def build_tzinfos(load_re='^...$|^US/'):
 
     from . import _common_tz
     for i in _common_tz.common_timezones:
-        # XXX: this probably isn't super reliable for various reasons
+        # NOTE: this probably isn't super reliable for various reasons:
         # 1) these abbreviations are notoriously ambiguous
         # 2) I'm using tzinfo._trans_idx (clearly meant to be a secret)
         # 3) why do I only look at the last 10 transitions? why not the last 30?
         # 4) ... or the last 2? seems kinda arbitrary, neh?
         # ?) other things I'm not thinking of
+        # It does have the benefit of being rather simple though.
         if r.search(i):
             tzinfo = dateutil.tz.gettz(i)
             tranil = dict([ (x.abbr,tzinfo) for x in tzinfo._trans_idx[-10:] ])
