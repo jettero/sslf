@@ -66,12 +66,12 @@ class MySplunkHEC(object):
     __repr__ = __str__
 
     def _post_message(self, json_data):
-        headers = {
+        headers = urllib3.make_headers( keep_alive=True,
+            user_agent='sslf-hec/3.14', accept_encoding=True)
+        headers.update({
             'Authorization': 'Splunk ' + self.token,
             'Content-Type': 'application/json',
-            'Keep-Alive': 'timeout=100, max=1000', # one hundred seconds, 1000 requests
-            'Connection': 'Keep-Alive', # please do the needful
-        }
+        })
         encoded_data = json.dumps(json_data, cls=MyJSONEncoder).encode('utf-8')
         fake_headers = headers.copy()
         fake_headers['Authorization'] = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx' + headers['Authorization'][-4:]
