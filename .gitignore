@@ -4,4 +4,5 @@ __pycache__
 *.pyc
 *.egg-info
 file
-t/meta
+dist
+build
