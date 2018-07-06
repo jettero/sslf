@@ -58,8 +58,8 @@ class LogLimit(RateLimit):
         if self.dt_ok:
             self.logger.error(self.format, *a, **kw)
 
+tzinfos = dict()
 def build_tzinfos(load_re='^...$|^US/'):
-    ret = dict()
     r = re.compile(load_re.strip())
 
     from . import _common_tz
@@ -73,8 +73,7 @@ def build_tzinfos(load_re='^...$|^US/'):
         if r.search(i):
             tzinfo = dateutil.tz.gettz(i)
             tranil = dict([ (x.abbr,tzinfo) for x in tzinfo._trans_idx[-10:] ])
-            ret.update(tranil)
-    return ret
+            tzinfos.update(tranil)
 
 class DateParser(object):
     def __init__(self, date_string, fmt='%Y-%m-%d %H:%M:%S %Z/%z', guess_tz=os.environ.get('TZ','UTC')):

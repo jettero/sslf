@@ -2,11 +2,10 @@ import os, posix
 import shelve
 import hashlib
 import logging
-import dateutil.parser
 import time
 from SplunkSuperLightForwarder.meta   import MetaData
 from SplunkSuperLightForwarder.re     import ReEngine
-from SplunkSuperLightForwarder.util   import AttrDict, LogLimit
+from SplunkSuperLightForwarder.util   import AttrDict, LogLimit, DateParser
 from SplunkSuperLightForwarder.reader import LOG_RLIMIT
 
 log = logging.getLogger('sslf:lines')
@@ -146,9 +145,9 @@ class Reader(MetaData):
                     ptv = evr.fields.get(self.parse_time)
                     if ptv:
                         log.debug("parsing field=%s value=%s as a datetime", self.parse_time, ptv)
-                        parsed = dateutil.parser.parse(ptv)
-                        evr['time'] = time.mktime( parsed.timetuple() )
-                        log.debug(" parsed time is %s", evr['time'])
+                        dp = DateParser(ptv)
+                        evr['time'] = dp.tstamp
+                        log.debug(" parsed time is %s", dp.fmt)
                     yield evr
                     self._save_stat( fh.tell() )
         except IOError as e:
