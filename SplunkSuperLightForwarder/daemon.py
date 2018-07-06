@@ -66,18 +66,18 @@ class Daemon(daemonize.Daemonize):
             self.read_config() # read the config file, with possible --config-file override
             self.parse_args(a) # parse args again to make sure they override configs when given
         except Exception as e:
-            raise DaemonConfig("daemon configuration failure: {}".format(e))
+            raise DaemonConfig("daemon configuration failure: {}".format(e)) from e
 
         try:
             self.setup_logging()
         except Exception as e:
-            raise LoggingConfig("logging configuration failed: {}".format(e))
+            raise LoggingConfig("logging configuration failed: {}".format(e)) from e
 
         import sre_constants
         try:
             build_tzinfos(self.tz_load_re)
         except sre_constants.error as e:
-            raise DaemonConfig('error parsing tz_load_re="{}": {}'.format(self.tz_load_re, e))
+            raise DaemonConfig('error parsing tz_load_re="{}": {}'.format(self.tz_load_re, e)) from e
 
         self.update_path_config() # no need to trap this one, it should go to logging
 
@@ -257,7 +257,13 @@ class Daemon(daemonize.Daemonize):
             bc_kw['filename'] = self.log_file if file is None else file
 
         logging.basicConfig( **bc_kw )
-        self.keep_fds = [ h.stream.fileno() for h in logging.root.handlers ]
+        self.keep_fds = list()
+        from io import UnsupportedOperation
+        for stream in [ h.stream for h in logging.root.handlers ]:
+            try:
+                self.keep_fds.append( stream.fileno() )
+            except UnsupportedOperation:
+                continue
 
         if self.filter_logs:
             fl = lambda r: 'SplunkSuperLightForwarder' in r.pathname or 'SSLF' in r.name
