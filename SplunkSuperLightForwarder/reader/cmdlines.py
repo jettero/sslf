@@ -13,11 +13,14 @@ class Reader(ReLineEventProcessor):
     _last_wait = _proc = _cmd = None
 
     def __init__(self, path=None, config=None):
+        if config is None:
+            config = dict()
         self.path = path # more of a tag than the actual command line
         #  [/usr/bin/whatever]
         #  reader = cmdlines
         #  cmd = /usr/bin/whatever --long-arg "stuff here"
         self.cmd = config.get('cmd', path)
+        self.prlimit = config.get('proc_restart_rlimit', PROC_RESTART_RLIMIT)
         self.setup_rlep(config)
 
     def __repr__(self):
@@ -72,7 +75,7 @@ class Reader(ReLineEventProcessor):
         # XXX: we should optionally combine stdout+stderr
         # XXX: we should optionally stream both to different readers? maybe?
         # XXX: ... ignore for now ...
-        with RateLimit('start-{}'.format(self.cmd), limit=PROC_RESTART_RLIMIT) as rl:
+        with RateLimit('start-{}'.format(self.cmd), limit=self.prlimit) as rl:
             if rl:
                 self.stop() # make sure we don't leave orphan procs and zombies
                 self._proc = subprocess.Popen(self.cmd, stdout=subprocess.PIPE)
@@ -89,7 +92,7 @@ class Reader(ReLineEventProcessor):
     def died(self):
         if not self._proc:
             return True
-        return self._proc.poll()
+        return self._proc.poll() is not None
 
     @property
     def spoll(self):
