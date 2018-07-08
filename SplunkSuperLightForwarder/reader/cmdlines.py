@@ -111,6 +111,8 @@ class Reader(ReLineEventProcessor):
         while self.spoll and l:
             l = self._proc.stdout.readline()
             if l:
-                yield self.rlep_line(l.decode())
+                # error: b = bytearray([0x7f, 0x80] + [ x for x in 'lol — mang'.encode() ]); (b, b.decode()) 
+                # ok, but with leading 0x7f: b.decode('utf-8', 'ignore')
+                yield self.rlep_line(l.decode('utf-8', 'ignore'))
             elif self.died:
                 self.wait()
