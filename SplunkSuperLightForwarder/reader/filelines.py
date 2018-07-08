@@ -33,12 +33,12 @@ class Sig(object):
 class Reader(MetaData):
     default_sourcetype = 'sslf:lines'
 
-    def __init__(self, path, meta_data_dir=None, signature_bytes=1024, config=None):
+    def __init__(self, path, signature_bytes=1024, config=None):
         self._reset()
         self.sbytes = signature_bytes
         self.path = path
         self.mid = 'lines-reader-{}'.format(self.path.replace('/','_'))
-        self.meta_data_dir = meta_data_dir
+        self.meta_data_dir = config.get('meta_data_dir')
         self.load()
         self.trunc_check()
 

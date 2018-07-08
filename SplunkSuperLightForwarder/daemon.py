@@ -135,6 +135,9 @@ class Daemon(daemonize.Daemonize):
             pv = self.paths[path] = AttrDict()
         pv.update(args)
 
+        if not pv.get('meta_data_dir'):
+            pv['meta_data_dir'] = self.meta_data_dir
+
         module = pv.pop('reader', 'lines')
         clazz  = pv.pop('class', 'Reader')
         if '.' not in module:
@@ -143,7 +146,7 @@ class Daemon(daemonize.Daemonize):
         try:
             m = importlib.import_module(module)
             c = getattr(m, clazz)
-            o = c(path, meta_data_dir=self.meta_data_dir, config=pv)
+            o = c(path, config=pv)
             pv['reader'] = o
             log.info("added %s to watchlist using %s", path, o)
         except ModuleNotFoundError as e:
