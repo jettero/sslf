@@ -15,7 +15,12 @@ class Reader(object):
         if config is None:
             config = dict()
         self.config = config
-        self.cmd = cmd if cmd else self.config.get('cmd')
+        # cmd is the default, the config['cmd'] "wins"
+        # that way config can be like this:
+        #  [/usr/bin/whatever]
+        #  reader = cmdlines
+        #  cmd = /usr/bin/whatever --long-arg "stuff here"
+        self.cmd = self.config.get('cmd', cmd)
 
     @property
     def cmd(self):
