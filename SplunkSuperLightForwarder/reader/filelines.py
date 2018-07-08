@@ -56,7 +56,7 @@ class Reader(MetaData):
         log.debug("{} online".format(self))
 
     def __repr__(self):
-        return "lines({}[{}])".format(self.path, self.tell)
+        return "filelines(path={} pos={})".format(self.path, self.tell)
 
     def _reset(self):
         self.mtime = self.tell = self.size = 0

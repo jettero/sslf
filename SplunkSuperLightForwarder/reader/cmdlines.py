@@ -22,6 +22,9 @@ class Reader(object):
         #  cmd = /usr/bin/whatever --long-arg "stuff here"
         self.cmd = self.config.get('cmd', cmd)
 
+    def __repr__(self):
+        return "cmdlines({})".format(self.cmd_str)
+
     @property
     def cmd(self):
         return self._cmd
