@@ -1,8 +1,6 @@
 import pytest
 import os, shutil
 
-from SplunkSuperLightForwarder.reader.lines import Reader
-
 def _e(var):
     if var in os.environ:
         l = os.environ.get(var).lower()
@@ -29,8 +27,9 @@ def tfile(request):
     return fh
 
 @pytest.fixture
-def linesReader(tfile):
-    return Reader('t/file', meta_data_dir='t/meta')
+def file_lines(tfile):
+    from SplunkSuperLightForwarder.reader.filelines import Reader
+    return Reader('t/file', config={'meta_data_dir': 't/meta'})
 
 @pytest.fixture
 def mdir(request):
