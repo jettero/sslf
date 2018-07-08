@@ -18,6 +18,7 @@ class MetaData(object):
         os.makedirs(self.meta_data_dir, exist_ok=True)
         with open(self.meta_fname, 'w') as fh:
             json.dump(self.serialize(), fh)
+            log.debug("saved %s to %s", self, self.meta_fname)
 
     def load(self):
         fname = self.meta_fname
