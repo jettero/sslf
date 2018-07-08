@@ -72,7 +72,7 @@ class Reader(object):
                 self._proc = subprocess.Popen(self.cmd, stdout=subprocess.PIPE)
                 log.info('started: %s', self.cmd_str)
             else:
-                log.info('not starting: %s; rate limited', self.cmd_str)
+                log.debug('not starting: %s; rate limited', self.cmd_str)
 
     @property
     def pid(self):
