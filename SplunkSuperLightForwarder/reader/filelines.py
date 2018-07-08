@@ -4,9 +4,8 @@ import hashlib
 import logging
 import time
 from SplunkSuperLightForwarder.meta   import MetaData
-from SplunkSuperLightForwarder.re     import ReEngine
-from SplunkSuperLightForwarder.util   import AttrDict, LogLimit, DateParser
-from SplunkSuperLightForwarder.reader import LOG_RLIMIT
+from SplunkSuperLightForwarder.util   import LogLimit
+from SplunkSuperLightForwarder.reader import ReLineEventProcessor, LOG_RLIMIT
 
 log = logging.getLogger('sslf:filelines')
 
@@ -30,7 +29,7 @@ class Sig(object):
     def serialize(self):
         return (self.h, self.b)
 
-class Reader(MetaData):
+class Reader(MetaData, ReLineEventProcessor):
     default_sourcetype = 'sslf:lines'
 
     def __init__(self, path, config=None):
@@ -45,14 +44,8 @@ class Reader(MetaData):
         try: config.get('something')
         except: config = dict()
 
-        self.parse_time = config.get('parse_time')
+        self.setup_rlep(config)
 
-        patterns = dict()
-        if config is not None:
-            for k in config:
-                if k.startswith('re_'):
-                    patterns[ k[3:] ] = config[k]
-        self._re = ReEngine(**patterns)
         log.debug("{} online".format(self))
 
     def __repr__(self):
@@ -141,14 +134,7 @@ class Reader(MetaData):
                     line = fh.readline()
                     if not line:
                         break
-                    evr = AttrDict(event=line, source=self.path, fields=self._re(line))
-                    ptv = evr.fields.get(self.parse_time)
-                    if ptv:
-                        log.debug("parsing field=%s value=%s as a datetime", self.parse_time, ptv)
-                        dp = DateParser(ptv)
-                        evr['time'] = dp.tstamp
-                        log.debug(" parsed time is %s", dp.fmt)
-                    yield evr
+                    yield self.rlep_line(line)
                     self._save_stat( fh.tell() )
         except IOError as e:
             with LogLimit(log, 'read(%s): %s', self.path, limit=LOG_RLIMIT) as ll:
