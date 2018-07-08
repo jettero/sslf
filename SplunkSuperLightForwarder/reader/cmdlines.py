@@ -3,24 +3,22 @@ import subprocess
 import select
 import logging
 import time
-from SplunkSuperLightForwarder.util import RateLimit
+from SplunkSuperLightForwarder.util   import RateLimit, AttrDict
+from SplunkSuperLightForwarder.reader import ReLineEventProcessor, PROC_RESTART_RLIMIT
 
 log = logging.getLogger('sslf:cmdlines')
 
-class Reader(object):
+class Reader(ReLineEventProcessor):
     default_sourcetype = 'sslf:lines'
     _last_wait = _proc = _cmd = None
 
-    def __init__(self, cmd=None, config=None):
-        if config is None:
-            config = dict()
-        self.config = config
-        # cmd is the default, the config['cmd'] "wins"
-        # that way config can be like this:
+    def __init__(self, path=None, config=None):
+        self.path = path # more of a tag than the actual command line
         #  [/usr/bin/whatever]
         #  reader = cmdlines
         #  cmd = /usr/bin/whatever --long-arg "stuff here"
-        self.cmd = self.config.get('cmd', cmd)
+        self.cmd = config.get('cmd', path)
+        self.setup_rlep(config)
 
     def __repr__(self):
         return "cmdlines({})".format(self.cmd_str)
@@ -46,7 +44,7 @@ class Reader(object):
     def wait(self, timeout=4):
         for i in range(timeout * 2):
             if self._proc.poll() is not None:
-                log.info("%s finished, issuing wait()".format(self.cmd_str))
+                log.info("%s finished, issuing wait()", self.cmd_str)
                 self._last_wait = self._proc.wait()
                 self._proc = None
                 return self._last_wait
@@ -74,7 +72,7 @@ class Reader(object):
         # XXX: we should optionally combine stdout+stderr
         # XXX: we should optionally stream both to different readers? maybe?
         # XXX: ... ignore for now ...
-        with RateLimit('start-{}'.format(self.cmd), limit=10) as rl:
+        with RateLimit('start-{}'.format(self.cmd), limit=PROC_RESTART_RLIMIT) as rl:
             if rl:
                 self.stop() # make sure we don't leave orphan procs and zombies
                 self._proc = subprocess.Popen(self.cmd, stdout=subprocess.PIPE)
@@ -91,7 +89,7 @@ class Reader(object):
     def died(self):
         if not self._proc:
             return True
-        return self._proc.poll() is not None
+        return self._proc.poll()
 
     @property
     def spoll(self):
@@ -113,6 +111,6 @@ class Reader(object):
         while self.spoll and l:
             l = self._proc.stdout.readline()
             if l:
-                yield l
+                yield self.rlep_line(l.decode())
             elif self.died:
                 self.wait()
