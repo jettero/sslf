@@ -33,9 +33,9 @@ class Sig(object):
 class Reader(MetaData):
     default_sourcetype = 'sslf:lines'
 
-    def __init__(self, path, signature_bytes=1024, config=None):
+    def __init__(self, path, config=None):
         self._reset()
-        self.sbytes = signature_bytes
+        self.sbytes = config.get('signature_bytes', 1024)
         self.path = path
         self.mid = 'lines-reader-{}'.format(self.path.replace('/','_'))
         self.meta_data_dir = config.get('meta_data_dir')
