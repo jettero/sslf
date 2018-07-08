@@ -1,0 +1,4 @@
+
+cmdlines:
+ - shell_wrapper should turn cmd into: bash -c 'cmd' (maybe via shell=True in Popen?)
+ - sleep_wrapper should turn cmd into: bash -c 'while true; do cmd; sleep s; done'
