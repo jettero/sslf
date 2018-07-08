@@ -208,7 +208,9 @@ class Daemon(daemonize.Daemonize):
     def step(self):
         for pv in self.paths.values():
             if pv.reader.ready:
+                log.debug("%s says its ready, reading", pv.reader)
                 for evr in pv.reader.read():
+                    log.debug("received event from %s, sending to hec %s", pv.reader, pv.hec)
                     yield pv.hec.build_event(evr)
 
     def loop(self):
