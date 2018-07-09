@@ -10,7 +10,7 @@ import signal
 import daemonize
 import collections
 
-from SplunkSuperLightForwarder.returner.hec import HEC
+from SplunkSuperLightForwarder.returner import HEC
 from SplunkSuperLightForwarder.util import AttrDict, RateLimit, build_tzinfos
 
 log = logging.getLogger("sslf")
