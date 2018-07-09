@@ -27,9 +27,15 @@ class Reader(ReLineEventProcessor):
         self.setup_rlep(config)
 
         self.shell_wrapper = bool(config.get('shell_wrapper', False))
-        try:
-            self.sleep_wrapper = int(config.get('sleep_wrapper'))
-        except TypeError:
+        self.sleep_wrapper = config.get('sleep_wrapper', False)
+        if self.sleep_wrapper:
+            try:
+                self.sleep_wrapper = int( self.sleep_wrapper )
+                if self.sleep_wrapper < 1:
+                    self.sleep_wrapper = False
+            except TypeError:
+                self.sleep_wrapper = 60 if self.sleep_wrapper else False
+        else:
             self.sleep_wrapper = False
 
     def __repr__(self):

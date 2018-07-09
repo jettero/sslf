@@ -64,3 +64,6 @@ def wrappers():
 
     c3.cmd = cmd
     assert c3.cmd == ['bash', '-c', 'while true; do {}; sleep 10; done'.format(cmd) ]
+
+    c0 = cl(config={'sleep_wrapper': True, 'shell_wrapper': False})
+    assert c0.sleep_wrapper == False
