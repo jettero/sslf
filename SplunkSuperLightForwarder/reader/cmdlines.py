@@ -3,8 +3,9 @@ import subprocess
 import select
 import logging
 import time
-from SplunkSuperLightForwarder.util   import RateLimit, AttrDict
-from SplunkSuperLightForwarder.reader import ReLineEventProcessor, PROC_RESTART_RLIMIT
+from SplunkSuperLightForwarder.util           import RateLimit, AttrDict
+from SplunkSuperLightForwarder.const          import PROC_RESTART_RLIMIT
+from SplunkSuperLightForwarder.transform.rlep import ReLineEventProcessor
 
 log = logging.getLogger('sslf:cmdlines')
 

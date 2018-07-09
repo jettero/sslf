@@ -3,9 +3,10 @@ import shelve
 import hashlib
 import logging
 import time
-from SplunkSuperLightForwarder.meta   import MetaData
-from SplunkSuperLightForwarder.util   import LogLimit
-from SplunkSuperLightForwarder.reader import ReLineEventProcessor, LOG_RLIMIT
+from SplunkSuperLightForwarder.meta           import MetaData
+from SplunkSuperLightForwarder.util           import LogLimit
+from SplunkSuperLightForwarder.const          import LOG_RLIMIT
+from SplunkSuperLightForwarder.transform.rlep import ReLineEventProcessor
 
 log = logging.getLogger('sslf:filelines')
 
