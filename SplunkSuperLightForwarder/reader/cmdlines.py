@@ -12,6 +12,8 @@ log = logging.getLogger('sslf:cmdlines')
 class Reader(ReLineEventProcessor):
     default_sourcetype = 'sslf:lines'
     _last_wait = _proc = _cmd = None
+    shell_wrapper = False
+    sleep_wrapper = False
 
     def __init__(self, path=None, config=None):
         if config is None:
@@ -23,6 +25,12 @@ class Reader(ReLineEventProcessor):
         self.cmd = config.get('cmd', path)
         self.prlimit = config.get('proc_restart_rlimit', PROC_RESTART_RLIMIT)
         self.setup_rlep(config)
+
+        self.shell_wrapper = bool(config.get('shell_wrapper', False))
+        try:
+            self.sleep_wrapper = int(config.get('sleep_wrapper'))
+        except TypeError:
+            self.sleep_wrapper = False
 
     def __repr__(self):
         return "cmdlines({})".format(self.cmd_str)
@@ -39,7 +47,16 @@ class Reader(ReLineEventProcessor):
         if not self.died:
             log.info("changing command; killing old command")
             self.stop()
-        self._cmd = shlex.split(str(cmd)) if cmd else None
+        self._cmd = c = shlex.split(str(cmd)) if cmd else None
+        if self.sleep_wrapper is not False:
+            c = ' '.join([ shlex.quote(x) for x in c ])
+            c = [ 'while true; do {:s}; sleep {:d}; done'.format(c, self.sleep_wrapper) ]
+            if self.shell_wrapper:
+                c = [ 'bash', '-c' ] + c
+            self._cmd = c
+        elif self.shell_wrapper:
+            c = ' '.join([ shlex.quote(x) for x in c ])
+            self._cmd = ['bash', '-c', c]
 
     @property
     def cmd_str(self):

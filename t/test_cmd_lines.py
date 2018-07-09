@@ -45,3 +45,22 @@ def test_reader_path_and_cmd_rlimited():
     # (default rlimit is 60 seconds, we specifiy to make the test clear)
     c = cl('/bin/ls', config={'cmd': ctxt, 'proc_restart_rlimit': 0})
     _assert_things(c)
+
+def wrappers():
+    c0 = cl(config={'sleep_wrapper': False, 'shell_wrapper': False})
+    c1 = cl(config={'sleep_wrapper': False, 'shell_wrapper': True })
+    c2 = cl(config={'sleep_wrapper': 10,    'shell_wrapper': False})
+    c3 = cl(config={'sleep_wrapper': 10,    'shell_wrapper': True })
+
+    cmd = 'pgrep -f sslf.py | ps ho rss'
+    c0.cmd = cmd
+    assert c0.cmd == cmd.split()
+
+    c1.cmd = cmd
+    assert c1.cmd == ['bash', '-c'] + cmd
+
+    c2.cmd = cmd
+    assert c2.cmd == ['bash', '-c', 'while true; do {}; sleep 10; done'.format(cmd) ]
+
+    c3.cmd = cmd
+    assert c3.cmd == ['bash', '-c', 'while true; do {}; sleep 10; done'.format(cmd) ]
