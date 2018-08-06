@@ -15,7 +15,7 @@ class Sig(object):
         self.b = b
 
     def __repr__(self):
-        return "Sig({0.h}[{0.b}])".format(self)
+        return f'Sig({self.h}[{self.b}])'
     __str__ = __repr__
 
     def __eq__(self, other):
@@ -46,10 +46,10 @@ class Reader(MetaData, ReLineEventProcessor):
 
         self.setup_rlep(config)
 
-        log.debug("{} online".format(self))
+        log.debug(f'{self} online')
 
     def __repr__(self):
-        return "filelines(path={} pos={})".format(self.path, self.tell)
+        return f'filelines(path={self.path} pos={self.tell})'
 
     def _reset(self):
         self.mtime = self.tell = self.size = 0

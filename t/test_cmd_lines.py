@@ -3,7 +3,7 @@ import pytest
 from SplunkSuperLightForwarder.reader.cmdlines import Reader as cl
 import time
 
-ctxt = 'ls -al {}'.format(__file__)
+ctxt = f'ls -al {__file__}'
 
 def _wait_for_startup(c, t=2):
     for i in range(10 * t):
@@ -60,10 +60,10 @@ def wrappers():
     assert c1.cmd == ['bash', '-c'] + cmd
 
     c2.cmd = cmd
-    assert c2.cmd == ['bash', '-c', 'while true; do {}; sleep 10; done'.format(cmd) ]
+    assert c2.cmd == ['bash', '-c', f'while true; do {cmd}; sleep 10; done' ]
 
     c3.cmd = cmd
-    assert c3.cmd == ['bash', '-c', 'while true; do {}; sleep 10; done'.format(cmd) ]
+    assert c3.cmd == ['bash', '-c', f'while true; do {cmd}; sleep 10; done' ]
 
     c0 = cl(config={'sleep_wrapper': True, 'shell_wrapper': False})
     assert c0.sleep_wrapper == False

@@ -39,7 +39,7 @@ class Reader(ReLineEventProcessor):
             self.sleep_wrapper = False
 
     def __repr__(self):
-        return "cmdlines({})".format(self.cmd_str)
+        return f'cmdlines({self.cmd_str})'
 
     @property
     def cmd(self):
@@ -56,7 +56,7 @@ class Reader(ReLineEventProcessor):
         self._cmd = c = shlex.split(str(cmd)) if cmd else None
         if self.sleep_wrapper is not False:
             c = ' '.join([ shlex.quote(x) for x in c ])
-            c = [ 'while true; do {:s}; sleep {:d}; done'.format(c, self.sleep_wrapper) ]
+            c = [ f'while true; do {c:s}; sleep {self.sleep_wrapper:d}; done' ]
             if self.shell_wrapper:
                 c = [ 'bash', '-c' ] + c
             self._cmd = c
@@ -66,7 +66,7 @@ class Reader(ReLineEventProcessor):
 
     @property
     def cmd_str(self):
-        return "cmd={}; pid={}".format( self.cmd, self.pid )
+        return f'cmd={self.cmd}; pid={self.pid}'
 
     def wait(self, timeout=4):
         for i in range(timeout * 2):
@@ -99,7 +99,7 @@ class Reader(ReLineEventProcessor):
         # XXX: we should optionally combine stdout+stderr
         # XXX: we should optionally stream both to different readers? maybe?
         # XXX: ... ignore for now ...
-        with RateLimit('start-{}'.format(self.cmd), limit=self.prlimit) as rl:
+        with RateLimit(f'start-{self.cmd}', limit=self.prlimit) as rl:
             if rl:
                 self.stop() # make sure we don't leave orphan procs and zombies
                 self._proc = subprocess.Popen(self.cmd, stdout=subprocess.PIPE)

@@ -62,7 +62,7 @@ class MySplunkHEC(object):
         self.base_payload.update(base_payload)
 
     def __str__(self):
-        return "HEC({}{})".format(self.url, self.path)
+        return f'HEC({self.url}{self.path})'
     __repr__ = __str__
 
     def _post_message(self, json_data):
@@ -97,7 +97,7 @@ class MySplunkHEC(object):
             return res # splunk seems to use 400 codes for data format errors
 
         if res.status < 200 or res.status > 299:
-            raise Exception("HTTP ERROR {status}: {error_maybe}".format(status=res.status, error_maybe=res.data))
+            raise Exception(f'HTTP ERROR {res.status}: {res.data}')
 
         return res
 
@@ -107,13 +107,13 @@ class MySplunkHEC(object):
         try:
             dat = json.loads(res.data.decode('utf-8'))
         except Exception as e:
-            raise Exception("Unable to decode reply from Splunk HEC: {0}".format(e))
+            raise Exception(f'Unable to decode reply from Splunk HEC: {e}')
 
         if res.status == 400:
-            raise Exception("Splunk HEC Data Format 400 Error code={code}: {text}".format(**dat))
+            raise Exception('Splunk HEC Data Format 400 Error code={code}: {text}'.format(**dat))
 
         if dat['code'] != 0:
-            raise Exception("Splunk HEC Error code={code}: {text}".format(**dat))
+            raise Exception('Splunk HEC Error code={code}: {text}'.format(**dat))
 
         return dat
 

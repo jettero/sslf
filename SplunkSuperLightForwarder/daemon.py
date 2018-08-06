@@ -66,18 +66,18 @@ class Daemon(daemonize.Daemonize):
             self.read_config() # read the config file, with possible --config-file override
             self.parse_args(a) # parse args again to make sure they override configs when given
         except Exception as e:
-            raise DaemonConfig("daemon configuration failure: {}".format(e)) from e
+            raise DaemonConfig(f'daemon configuration failure: {e}') from e
 
         try:
             self.setup_logging()
         except Exception as e:
-            raise LoggingConfig("logging configuration failed: {}".format(e)) from e
+            raise LoggingConfig(f'logging configuration failed: {e}') from e
 
         import sre_constants
         try:
             build_tzinfos(self.tz_load_re)
         except sre_constants.error as e:
-            raise DaemonConfig('error parsing tz_load_re="{}": {}'.format(self.tz_load_re, e)) from e
+            raise DaemonConfig(f'error parsing tz_load_re="{self.tz_load_re}": {e}') from e
 
         self.update_path_config() # no need to trap this one, it should go to logging
 
@@ -106,7 +106,7 @@ class Daemon(daemonize.Daemonize):
                     elif args[k].lower() in ('true', 'yes', '1',): args[k] = True
                 setattr(self,k, args[k])
             elif with_errors:
-                raise Exception("{} is not a valid config argument".format(k))
+                raise Exception(f'{k} is not a valid config argument')
 
     def add_path_config(self, path, args):
         if not path.startswith('/'):
@@ -127,7 +127,7 @@ class Daemon(daemonize.Daemonize):
         return self
 
     def _grok_path(self, path, args):
-        log.debug("trying to figure out config path={}".format(path))
+        log.debug(f'trying to figure out config path={path}')
         if not path.startswith('/'):
             return
         pv = self.paths.get(path)
@@ -151,7 +151,7 @@ class Daemon(daemonize.Daemonize):
             log.info("added %s to watchlist using %s", path, o)
         except ModuleNotFoundError as e:
             self.paths.pop(path, None)
-            log.error("couldn't find {1} in {0}: {2}".format(module,clazz,e))
+            log.error(f"couldn't find {module} in {clazz}: {e}")
             return
 
         hec_url = pv.get('hec', self.hec)
@@ -198,7 +198,7 @@ class Daemon(daemonize.Daemonize):
             log.debug("parsing config_file=%s", self.config_file)
             config.read(self.config_file)
         except Exception as e:
-            log.error("couldn't read config file {}: {}".format(self.config_file, e))
+            log.error(f"couldn't read config file {self.config_file}: {e}")
         for k in config:
             if k == 'sslf':
                 self._grok_args(config[k])
@@ -240,8 +240,8 @@ class Daemon(daemonize.Daemonize):
                 h.setLevel(self.log_level.upper().strip().split('.')[-1])
                 return h.level
             except ValueError:
-                raise ValueError(
-                    "log_level='{}' is not understood (even with help) by python logging".format(self.log_level))
+                raise ValueError( f"log_level='{self.log_level}'"
+                    " is not understood (even with help) by python logging")
         # can we get here?? no?
         return logging.DEBUG
 

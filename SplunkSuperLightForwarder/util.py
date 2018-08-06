@@ -37,8 +37,7 @@ class RateLimit(object):
         # returning nothing tells with() to re-raise whatever exception was received
 
     def __repr__(self):
-        return "{}( tag={}, dt={}, ok={} )".format( self.__class__.__name__,
-            self.tag, self.dt, self.dt_ok )
+        return f'{self.__class__.__name__}( tag={self.tag}, dt={self.dt}, ok={self.dt_ok} )'
 
 class LogLimit(RateLimit):
     def __init__(self, logger, *a, limit=DEFAULT_RATE_LIMIT):
@@ -86,5 +85,5 @@ class DateParser(object):
         self.fmt    = self.parsed.strftime(fmt)
 
     def __repr__(self):
-        return 'DateParsed({} -> {})'.format(self.orig, self.fmt)
+        return f'DateParsed({self.orig} -> {self.fmt})'
     __str__ = __repr__
