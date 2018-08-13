@@ -3,7 +3,7 @@ import os, socket, datetime, urllib3, json, time
 from urllib3.exceptions import InsecureRequestWarning
 import logging
 
-from SplunkSuperLightForwarder.util import AttrDict
+from sslf.util import AttrDict
 
 log = logging.getLogger('sslf:hec')
 

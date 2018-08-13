@@ -1,5 +1,5 @@
 
-from SplunkSuperLightForwarder.re import ReEngine
+from sslf.re import ReEngine
 
 TEST = "This is my pattern 2+2=4; Nyan Cat."
 

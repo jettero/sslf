@@ -1,4 +1,4 @@
-import SplunkSuperLightForwarder
+import sslf
 import sys
 import logging
 
@@ -9,7 +9,7 @@ def test_setup(nc_config):
 
     log.debug("-----=: setup()")
     sslf = nc_config() # Daemon.config_file = None; Daemon().update_config()
-    assert sslf.config_file == SplunkSuperLightForwarder.Daemon.config_file
+    assert sslf.config_file == sslf.Daemon.config_file
 
     # note that these config files aren't meant to exist
     log.debug("-----=: setup(-c t/sslf.1)")
@@ -32,7 +32,7 @@ def test_setup(nc_config):
     assert 'valid config' in str(fail)
 
 # def test_read_file():
-#     sslf = SplunkSuperLightForwarder.setup(config_file='t/test1.conf')
+#     sslf = sslf.setup(config_file='t/test1.conf')
 #     assert sslf.config_file == 't/test1.conf'
 #     assert sslf.hec == 'https://localhost:54321/'
 #     assert set(sslf.paths.keys()) == set(['/tmp/funny-little.log'])

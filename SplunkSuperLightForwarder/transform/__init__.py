@@ -1,2 +1,0 @@
-
-from SplunkSuperLightForwarder.transform.rlep import ReLineEventProcessor

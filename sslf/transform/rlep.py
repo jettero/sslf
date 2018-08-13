@@ -2,8 +2,8 @@ import logging
 
 log = logging.getLogger("sslf:rlep")
 
-from SplunkSuperLightForwarder.re   import ReEngine
-from SplunkSuperLightForwarder.util import AttrDict, DateParser
+from sslf.re   import ReEngine
+from sslf.util import AttrDict, DateParser
 
 class ReLineEventProcessor(object):
 

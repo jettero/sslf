@@ -1,6 +1,6 @@
 import pytest
 
-from SplunkSuperLightForwarder.reader.cmdlines import Reader as cl
+from sslf.reader.cmdlines import Reader as cl
 import time
 
 ctxt = f'ls -al {__file__}'

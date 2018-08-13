@@ -28,7 +28,7 @@ def tfile(request):
 
 @pytest.fixture
 def file_lines(tfile):
-    from SplunkSuperLightForwarder.reader.filelines import Reader
+    from sslf.reader.filelines import Reader
     return Reader('t/file', config={'meta_data_dir': 't/meta'})
 
 @pytest.fixture
@@ -42,11 +42,11 @@ def mdir(request):
 
 @pytest.fixture
 def nc_config():# no-[default]-config config()
-    import SplunkSuperLightForwarder
-    orig = SplunkSuperLightForwarder.Daemon.config_file
-    SplunkSuperLightForwarder.Daemon.config_file = ''
+    import sslf
+    orig = sslf.Daemon.config_file
+    sslf.Daemon.config_file = ''
     def _s(*a, **kw):
-        return SplunkSuperLightForwarder.Daemon(*a, **kw).update_path_config()
+        return sslf.Daemon(*a, **kw).update_path_config()
     yield _s
-    SplunkSuperLightForwarder.Daemon.config_file = orig
+    sslf.Daemon.config_file = orig
 

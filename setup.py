@@ -17,7 +17,7 @@ class PyTest(TestCommand):
         errno = pytest.main(shlex.split(self.pytest_args))
         sys.exit(errno)
 
-setup(name='SplunkSuperLightForwarder',
+setup(name='sslf',
     version       = '1.0',
     description   = 'Splunk Super Light Forwarder',
     author        = 'Paul Miller',
@@ -28,7 +28,7 @@ setup(name='SplunkSuperLightForwarder',
     packages      = find_packages(),
     entry_points={
         'console_scripts': [
-            'sslf = SplunkSuperLightForwarder:run',
+            'sslf = sslf:run',
         ],
     },
 )

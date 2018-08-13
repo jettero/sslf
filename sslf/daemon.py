@@ -10,8 +10,8 @@ import signal
 import daemonize
 import collections
 
-from SplunkSuperLightForwarder.returner import HEC
-from SplunkSuperLightForwarder.util import AttrDict, RateLimit, build_tzinfos
+from sslf.returner import HEC
+from sslf.util import AttrDict, RateLimit, build_tzinfos
 
 log = logging.getLogger("sslf")
 
@@ -141,7 +141,7 @@ class Daemon(daemonize.Daemonize):
         module = pv.pop('reader', 'lines')
         clazz  = pv.pop('class', 'Reader')
         if '.' not in module:
-            module = 'SplunkSuperLightForwarder.reader.' + module
+            module = 'sslf.reader.' + module
 
         try:
             m = importlib.import_module(module)
@@ -266,7 +266,7 @@ class Daemon(daemonize.Daemonize):
             if isinstance(h, logging.FileHandler) ]
 
         if self.filter_logs:
-            fl = lambda r: 'SplunkSuperLightForwarder' in r.pathname or 'SSLF' in r.name
+            fl = lambda r: 'sslf' in r.pathname or 'SSLF' in r.name
             for h in logging.root.handlers:
                 h.addFilter(fl)
 

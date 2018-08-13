@@ -4,5 +4,5 @@
 #       ./sslf.py runs directly in the repo directory
 
 if __name__ == '__main__':
-    import SplunkSuperLightForwarder
-    SplunkSuperLightForwarder.run()
+    import sslf
+    sslf.run()

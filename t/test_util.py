@@ -1,4 +1,4 @@
-import SplunkSuperLightForwarder.util as u
+import sslf.util as u
 import time
 from collections import Counter
 

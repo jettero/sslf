@@ -3,7 +3,7 @@ import shelve
 import hashlib
 import logging
 import time
-from SplunkSuperLightForwarder.reader import (
+from sslf.reader import (
     MetaData, LogLimit, LOG_RLIMIT,
     ReLineEventProcessor )
 

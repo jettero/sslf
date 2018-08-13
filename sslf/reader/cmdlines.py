@@ -3,7 +3,7 @@ import subprocess
 import select
 import logging
 import time
-from SplunkSuperLightForwarder.reader import (
+from sslf.reader import (
     RateLimit, AttrDict, PROC_RESTART_RLIMIT,
     ReLineEventProcessor)
 
