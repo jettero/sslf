@@ -9,7 +9,7 @@ def test_setup(nc_config):
 
     log.debug("-----=: setup()")
     sslf = nc_config() # Daemon.config_file = None; Daemon().update_config()
-    assert sslf.config_file == sslf.Daemon.config_file
+    assert sslf.config_file == sslf.__class__.config_file
 
     # note that these config files aren't meant to exist
     log.debug("-----=: setup(-c t/sslf.1)")
