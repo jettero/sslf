@@ -38,31 +38,28 @@ class Reader(ReLineEventProcessor):
         else:
             self.sleep_wrapper = False
 
+        log.debug(f'WTF( {self.cmd} )')
+
     def __repr__(self):
         return f'cmdlines({self.cmd_str})'
 
     @property
     def cmd(self):
-        return self._cmd
+        if self._cmd is None:
+            return None
+        if self.sleep_wrapper is not False:
+            c = f'while true; do {self._cmd:s}; sleep {self.sleep_wrapper:d}; done'
+            return [ 'bash', '-c', c ]
+        elif self.shell_wrapper:
+            return ['bash', '-c', str(self._cmd)]
+        return shlex.split(str(self._cmd))
 
     @cmd.setter
     def cmd(self, cmd):
-        if isinstance(cmd, (list,tuple)):
-            self._cmd = cmd
-            return
+        self._cmd = cmd
         if not self.died:
             log.info("changing command; killing old command")
             self.stop()
-        self._cmd = c = shlex.split(str(cmd)) if cmd else None
-        if self.sleep_wrapper is not False:
-            c = ' '.join([ shlex.quote(x) for x in c ])
-            c = [ f'while true; do {c:s}; sleep {self.sleep_wrapper:d}; done' ]
-            if self.shell_wrapper:
-                c = [ 'bash', '-c' ] + c
-            self._cmd = c
-        elif self.shell_wrapper:
-            c = ' '.join([ shlex.quote(x) for x in c ])
-            self._cmd = ['bash', '-c', c]
 
     @property
     def cmd_str(self):
