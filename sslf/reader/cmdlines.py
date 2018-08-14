@@ -38,8 +38,6 @@ class Reader(ReLineEventProcessor):
         else:
             self.sleep_wrapper = False
 
-        log.debug(f'WTF( {self.cmd} )')
-
     def __repr__(self):
         return f'cmdlines({self.cmd_str})'
 
