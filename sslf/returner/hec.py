@@ -47,7 +47,7 @@ class MySplunkHEC(object):
             source=evr.source, time=evr.time, fields=evr.fields)
 
     def __init__(self, hec_url, token,
-        verify_ssl=True, use_certifi=False, proxy_url=False
+        verify_ssl=True, use_certifi=False, proxy_url=False,
         redirect_limit=10, retries=2, conn_timeout=3, read_timeout=2, backoff=3,
         **base_payload):
 
