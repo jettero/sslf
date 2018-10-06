@@ -1,3 +1,0 @@
-urllib3
-daemonize
-python-dateutil

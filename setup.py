@@ -26,6 +26,11 @@ setup(name='sslf',
     tests_require = ['pytest',],
     cmdclass      = {'test': PyTest},
     packages      = find_packages(),
+    install_requires=[
+        'urllib3',
+        'daemonize',
+        'python-dateutil',
+    ],
     entry_points={
         'console_scripts': [
             'sslf = sslf:run',
