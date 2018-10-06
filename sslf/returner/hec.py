@@ -46,18 +46,48 @@ class MySplunkHEC(object):
         return HECEvent(hec=self, event=evr.event,
             source=evr.source, time=evr.time, fields=evr.fields)
 
-    def __init__(self, hec_url, token, verify_ssl=True, **base_payload):
+    def __init__(self, hec_url, token,
+        verify_ssl=True,
+        use_certifi=False,
+        redirect_limit=10, retries=2, conn_timeout=3, read_timeout=2, backoff=3,
+        **base_payload):
         self.token  = token
         self.url    = hec_url
-        self.verify = verify_ssl
 
         if self.url.endswith('/'):
             self.url = self.url[:len(self.url)-1]
 
-        self.pool_manager = urllib3.PoolManager(timeout=2.5)
-
-        if self.verify == False:
+        poolmanager_opts = dict()
+        if use_certifi:
+            # <rant>
+            # certifi is the rational thing to do in most commercial situations
+            # where you have old RHEL with ancient CA certs.  It avoids having
+            # to update system packages to get modern CA lists.
+            #
+            # However, if you have modern hosts with update CA certs that you
+            # trust, or if you have any self signed or private CA certs it
+            # doesn't help and quickly becomes an anti-pattern.
+            #
+            # Updating /etc/ca_certs with vim or salt (or whatever) should be
+            # enough. certifi forces backfilps to use a custom CA.
+            # </rant>
+            poolmanager_opts['ca_certs'] = certifi.where()
+        if verify_ssl:
+            poolmanager_opts['cert_reqs'] = 'CERT_REQUIRED'
+        else:
             urllib3.disable_warnings(InsecureRequestWarning)
+
+        # NOTE: timeout does not have to respect or relate to retries
+        # this just seemed like a convenient way to avoid another init-kw-arg
+        poolmanager_opts['timeout'] = retries * conn_timeout
+        poolmanager_opts['retries'] = urllib3.util.retry.Retry(total=retries,
+            redirect=redirect_limit, connect=conn_timeout, read=read_timeout,
+            respect_retry_after_header=True, backoff_factor=backoff)
+
+        if proxy:
+            self.pool_manager = urllib3.ProxyManager(proxy, **poolmanager_opts)
+        else:
+            self.pool_manager = urllib3.PoolManager(**poolmanager_opts)
 
         self.base_payload.update(base_payload)
 
