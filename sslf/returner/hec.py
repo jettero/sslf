@@ -47,12 +47,12 @@ class MySplunkHEC(object):
             source=evr.source, time=evr.time, fields=evr.fields)
 
     def __init__(self, hec_url, token,
-        verify_ssl=True,
-        use_certifi=False,
+        verify_ssl=True, use_certifi=False, proxy_url=False
         redirect_limit=10, retries=2, conn_timeout=3, read_timeout=2, backoff=3,
         **base_payload):
-        self.token  = token
-        self.url    = hec_url
+
+        self.token = token
+        self.url   = hec_url
 
         if self.url.endswith('/'):
             self.url = self.url[:len(self.url)-1]
@@ -84,8 +84,8 @@ class MySplunkHEC(object):
             redirect=redirect_limit, connect=conn_timeout, read=read_timeout,
             respect_retry_after_header=True, backoff_factor=backoff)
 
-        if proxy:
-            self.pool_manager = urllib3.ProxyManager(proxy, **poolmanager_opts)
+        if proxy_url:
+            self.pool_manager = urllib3.ProxyManager(proxy_url, **poolmanager_opts)
         else:
             self.pool_manager = urllib3.PoolManager(**poolmanager_opts)
 
