@@ -9,6 +9,11 @@ log = logging.getLogger('sslf:hec')
 
 HOSTNAME = socket.gethostname()
 
+# try to make sure each send is this big
+# (but still timely)
+_max_content_bytes = 100000 # bytes
+_delay_send_wait_time = 500 # ms
+
 class HECEvent(AttrDict):
     def send(self):
         # don't send these to hec.send_event or it'll send them in the payload
