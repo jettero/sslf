@@ -27,6 +27,9 @@ class MyJSONEncoder(json.JSONEncoder):
 
 
 class Payload(object):
+    max_bytes = _max_content_bytes
+    sep = b' '
+
     def __init__(self, *items):
         # we compose to ensure correct encoding on append()
         # without worring about extend() (et al?)
@@ -41,7 +44,23 @@ class Payload(object):
         else:
             if not isinstance(item, str):
                 item = json.dumps(item, cls=MyJSONEncoder)
-            self.q.append(item.encode('utf-8'))
+            self.q.append(item)
+
+    def pop(self):
+        ret = bytes()
+        # this is clearly off-by-one (the leading space), but it saves an
+        # annoying if-block, and it's over-estimating, not under-estimating.
+        # It's a keeper imo.
+        while bool(self) and len(ret) + len(self.sep + self.q[0].encode('utf-8')) < self.max_bytes:
+            ret += self.sep + self.q.popleft().encode('utf-8')
+        return ret.strip()
+
+    def __iter__(self):
+        while self:
+            yield self.pop()
+
+    def __bool__(self):
+        return len(self.q) > 0
 
     def __len__(self):
         s = len(self.q)-1 # start with the separators
