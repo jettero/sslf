@@ -29,6 +29,7 @@ class MyJSONEncoder(json.JSONEncoder):
 class Payload(object):
     max_bytes = _max_content_bytes
     sep = b' '
+    charset = 'utf-8'
 
     def __init__(self, *items):
         # we compose to ensure correct encoding on append()
@@ -48,12 +49,19 @@ class Payload(object):
 
     def pop(self):
         ret = bytes()
-        # this is clearly off-by-one (the leading space), but it saves an
-        # annoying if-block, and it's over-estimating, not under-estimating.
-        # It's a keeper imo.
-        while bool(self) and len(ret) + len(self.sep + self.q[0].encode('utf-8')) < self.max_bytes:
-            ret += self.sep + self.q.popleft().encode('utf-8')
-        return ret.strip()
+        while bool(self) and len(self.q) > 0:
+            item = self.q[0].encode(self.charset)
+            l = len(ret)
+            if l > 0:
+                l += 1 # count sep byte
+            l += len(item)
+            if l > self.max_bytes:
+                break
+            self.q.popleft()
+            if ret:
+                ret += self.sep
+            ret += item
+        return ret
 
     def __iter__(self):
         while self:
