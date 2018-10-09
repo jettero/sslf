@@ -161,33 +161,39 @@ class MySplunkHEC(object):
         return f'HEC({self.url}{self.path})'
     __repr__ = __str__
 
-    def _post_message(self, json_data):
-        headers = urllib3.make_headers( keep_alive=True,
-            user_agent='sslf-hec/3.14', accept_encoding=True)
-        headers.update({
-            'Authorization': 'Splunk ' + self.token,
-            'Content-Type': 'application/json',
-        })
-        encoded_data = json.dumps(json_data, cls=MyJSONEncoder).encode('utf-8')
+    def _post_message(self, dat):
+        headers = urllib3.make_headers( keep_alive=True, user_agent='sslf-hec/3.14', accept_encoding=True)
+        headers.update({ 'Authorization': 'Splunk ' + self.token, 'Content-Type': 'application/json' })
         fake_headers = headers.copy()
         fake_headers['Authorization'] = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx' + headers['Authorization'][-4:]
         log.debug("HEC.pool_manager.request('POST', url=%s + path=%s, body=%s, headers=%s)",
-            self.url, self.path, encoded_data, fake_headers)
-        return self.pool_manager.request('POST', self.url + self.path, body=encoded_data, headers=headers)
+            self.url, self.path, dat, fake_headers)
+        return self.pool_manager.request('POST', self.url + self.path, body=dat, headers=headers)
+
+    def encode_events(self, *events, **payload_data):
+        payload = Payload()
+
+        for event in events:
+            dat = self.base_payload.copy()
+            dat.update(payload_data)
+            dat['event'] = event
+            if not dat.get('time') and isinstance(event, dict):
+                dat['time'] = event.get('time')
+            if not dat.get('time'):
+                dat['time'] = datetime.datetime.now()
+            payload.append(dat)
+
+        return payload
 
     def _send_event(self, event, **payload_data):
-        payload = self.base_payload.copy()
-        payload.update(payload_data)
+        payload = self.encode_events(event, **payload_data)
+        dat = payload.pop()
 
-        payload['event'] = event
+        if payload:
+            # TODO: we need to queue the extra or have a queue/send thread-loop
+            raise Exception("payload size exceeds Splunk HEC max size")
 
-        if not payload.get('time') and isinstance(event, dict):
-            payload['time'] = event.get('time')
-
-        if not payload.get('time'):
-            payload['time'] = datetime.datetime.now()
-
-        res = self._post_message(payload)
+        res = self._post_message(dat)
 
         if res.status == 400:
             return res # splunk seems to use 400 codes for data format errors
