@@ -2,6 +2,7 @@
 import os, socket, datetime, urllib3, json, time
 from urllib3.exceptions import InsecureRequestWarning
 import logging
+from collections import deque
 
 from sslf.util import AttrDict
 
@@ -13,6 +14,48 @@ HOSTNAME = socket.gethostname()
 # (but still timely)
 _max_content_bytes = 100000 # bytes
 _delay_send_wait_time = 500 # ms
+
+class MyJSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, (datetime.datetime,datetime.date)):
+            dt = o.timetuple()
+            dtt = time.mktime(dt)
+            return int(dtt)
+        if o.__class__.__name__ in ('Decimal'):
+            return float(o)
+        return json.JSONEncoder.default(self,o)
+
+
+class Payload(object):
+    def __init__(self, *items):
+        # we compose to ensure correct encoding on append()
+        # without worring about extend() (et al?)
+        self.q = deque()
+        for item in items:
+            self.q.append(item)
+
+    def append(self, item):
+        if isinstance(item, Payload):
+            for x in item:
+                self.append(x)
+        else:
+            if not isinstance(item, str):
+                item = json.dumps(item, cls=MyJSONEncoder)
+            self.q.append(item.encode('utf-8'))
+
+    def __len__(self):
+        s = len(self.q)-1 # start with the separators
+        for item in self.q:
+            s += len(item) # and the length of the items
+        return s
+
+    def __repr__(self):
+        l = len(self.q)
+        if l == 0:
+            return 'Payload<empty>'
+        if l == 1:
+            return 'Payload<1 item>'
+        return f'Payload<{l} items>'
 
 class HECEvent(AttrDict):
     def send(self):
@@ -27,15 +70,6 @@ class HECEvent(AttrDict):
             self.event = event
             raise
 
-class MyJSONEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, (datetime.datetime,datetime.date)):
-            dt = o.timetuple()
-            dtt = time.mktime(dt)
-            return int(dtt)
-        if o.__class__.__name__ in ('Decimal'):
-            return float(o)
-        return json.JSONEncoder.default(self,o)
 
 class MySplunkHEC(object):
     base_payload = {
