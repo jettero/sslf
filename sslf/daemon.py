@@ -211,16 +211,14 @@ class Daemon(daemonize.Daemonize):
                 log.debug("%s says its ready, reading", pv.reader)
                 for evr in pv.reader.read():
                     log.debug("received event from %s, sending to hec %s", pv.reader, pv.hec)
-                    yield pv.hec.build_event(evr)
+                    try:
+                        pv.hec.send_event(evr)
+                    except Exception as e:
+                        log.error("error sending event to %s: %s", pv.hec, e)
 
     def loop(self):
         while True:
-            for ev in self.step():
-                log.debug("sending event to %s", ev.hec)
-                try:
-                    ev.send()
-                except Exception as e:
-                    log.error("error sending event to %s: %s", ev.hec, e)
+            self.step()
             time.sleep(1)
 
     @property

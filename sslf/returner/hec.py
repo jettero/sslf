@@ -84,20 +84,6 @@ class Payload(object):
             return 'Payload<1 item>'
         return f'Payload<{l} items>'
 
-class HECEvent(AttrDict):
-    def send(self):
-        # don't send these to hec.send_event or it'll send them in the payload
-        hec = self.pop('hec')
-        event = self.pop('event')
-        try:
-            hec.send_event( event, **self )
-        except:
-            # put these back for error reporting purposes
-            self.hec = hec
-            self.event = event
-            raise
-
-
 class MySplunkHEC(object):
     base_payload = {
         'index':      'main',
@@ -108,14 +94,8 @@ class MySplunkHEC(object):
 
     path = "/services/collector/event"
 
-    def build_event(self, evr): # evr is an event reader output object
-        return HECEvent(hec=self, event=evr.event,
-            source=evr.source, time=evr.time, fields=evr.fields)
-
-    def __init__(self, hec_url, token,
-        verify_ssl=True, use_certifi=False, proxy_url=False,
-        redirect_limit=10, retries=2, conn_timeout=3, read_timeout=2, backoff=3,
-        **base_payload):
+    def __init__(self, hec_url, token, verify_ssl=True, use_certifi=False, proxy_url=False,
+        redirect_limit=10, retries=2, conn_timeout=3, read_timeout=2, backoff=3, **base_payload):
 
         self.token = token
         self.url   = hec_url
@@ -135,7 +115,9 @@ class MySplunkHEC(object):
             # doesn't help and quickly becomes an anti-pattern.
             #
             # Updating /etc/ca_certs with vim or salt (or whatever) should be
-            # enough. certifi forces backfilps to use a custom CA.
+            # enough. certifi forces backfilps to use a custom CA and causes
+            # confusion regards to why updating the system CA certs doesn't
+            # alter the behavior of programs using certifi.
             # </rant>
             poolmanager_opts['ca_certs'] = certifi.where()
         if verify_ssl:
@@ -195,15 +177,8 @@ class MySplunkHEC(object):
         except json.JSONDecodeError as e:
             log.error('Unable to decode reply from Splunk HEC: %s', e)
 
-    def send_event(self, event, **payload_data):
-        payload = self.encode_events(event, **payload_data)
-        dat = payload.pop()
-
-        if payload:
-            # TODO: we need to queue the extra or have a queue/send thread-loop
-            raise Exception("payload size exceeds Splunk HEC max size")
-
-        res = self._post_message(dat)
+    def _send_event(self, encoded_payload):
+        res = self._post_message(encoded_payload)
 
         if res.status == 400:
             self._decode(res)
@@ -213,5 +188,17 @@ class MySplunkHEC(object):
             log.error(f'HTTP ERROR {res.status}: {res.data}')
 
         self._decode_res(res)
+
+    def send_event(self, *events, **payload_data):
+        def _preprocess_event(event):
+            if isinstance(event, dict) and 'event' in event:
+                payload_data.update(**event)
+                event = payload_data.pop('event')
+            return event
+        events = [ _preprocess_event(e) for e in events ]
+        payload = self.encode_events(*events, **payload_data)
+
+        while payload:
+            self._send_event(payload.pop())
 
 HEC = MySplunkHEC
