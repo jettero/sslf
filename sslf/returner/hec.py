@@ -84,6 +84,7 @@ class Payload(object):
             return 'Payload<1 item>'
         return f'Payload<{l} items>'
 
+
 class MySplunkHEC(object):
     base_payload = {
         'index':      'main',
