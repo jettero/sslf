@@ -30,7 +30,6 @@ setup(name='sslf',
         'urllib3',
         'daemonize',
         'python-dateutil',
-        'diskqueue',
     ],
     entry_points={
         'console_scripts': [
