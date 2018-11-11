@@ -26,7 +26,7 @@ class MyJSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self,o)
 
 
-class Payload(object):
+class Payload:
     max_bytes = _max_content_bytes
     sep = b' '
     charset = 'utf-8'
@@ -85,7 +85,7 @@ class Payload(object):
         return f'Payload<{l} items>'
 
 
-class MySplunkHEC(object):
+class MySplunkHEC:
     base_payload = {
         'index':      'main',
         'sourcetype': 'json',

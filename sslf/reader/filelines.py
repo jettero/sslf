@@ -9,7 +9,7 @@ from sslf.reader import (
 
 log = logging.getLogger('sslf:filelines')
 
-class Sig(object):
+class Sig:
     def __init__(self, h='', b=0):
         self.h = h
         self.b = b

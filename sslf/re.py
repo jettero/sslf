@@ -4,7 +4,7 @@ import logging
 
 FIELD_NAME_FORMAT = re.compile(r'^(?P<field_name>[^:+]+?)(?::(?P<input>.+?))?(?:\+(?P<flags>.+))?$')
 
-class ReEngine(object):
+class ReEngine:
     def __init__(self, **re_config):
         self.logger = logging.getLogger('sslf:re')
         self.set_re(**re_config)

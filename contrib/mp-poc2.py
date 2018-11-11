@@ -2,7 +2,7 @@
 import multiprocessing as mp
 import os
 
-class Classy(object):
+class Classy:
     def __init__(self):
         self.ctx = mp.get_context('spawn')
 

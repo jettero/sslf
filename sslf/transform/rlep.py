@@ -5,7 +5,7 @@ log = logging.getLogger("sslf:rlep")
 from sslf.re   import ReEngine
 from sslf.util import AttrDict, DateParser
 
-class ReLineEventProcessor(object):
+class ReLineEventProcessor:
 
     def setup_rlep(self, config=None):
         self.parse_time = config.get('parse_time')

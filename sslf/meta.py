@@ -4,7 +4,7 @@ import logging
 
 log = logging.getLogger('sslf:meta')
 
-class MetaData(object):
+class MetaData:
 
     @property
     def meta_basename(self):

@@ -9,7 +9,7 @@ def test_attrdict():
     ad.yo = 'supz'
     assert ad.get('yo') == None
 
-class mylogger(object):
+class mylogger:
     def __init__(self,c=None):
         if c is None:
             c = Counter()

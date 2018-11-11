@@ -5,7 +5,7 @@ import random, time
 # copied from https://asyncio.readthedocs.io/en/latest/producer_consumer.html
 # but, modified to taste (obviously)
 
-class DT(object):
+class DT:
     def __init__(self, base=1):
         self.b = base
         self.t = 0

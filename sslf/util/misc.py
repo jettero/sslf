@@ -10,7 +10,7 @@ class AttrDict(dict):
         return self.get(name)
 
 DEFAULT_RATE_LIMIT = 1
-class RateLimit(object):
+class RateLimit:
     limits = dict()
 
     def __init__(self, tag, limit=DEFAULT_RATE_LIMIT):
@@ -77,7 +77,7 @@ def build_tzinfos(load_re='^...$|^US/'):
             tranil = dict([ (x.abbr,tzinfo) for x in tzinfo._trans_idx[-10:] ])
             tzinfos.update(tranil)
 
-class DateParser(object):
+class DateParser:
     def __init__(self, date_string, fmt='%Y-%m-%d %H:%M:%S %Z/%z', guess_tz=os.environ.get('TZ','UTC')):
         self.orig   = date_string
         self.parsed = dateutil.parser.parse(date_string, tzinfos=tzinfos)
