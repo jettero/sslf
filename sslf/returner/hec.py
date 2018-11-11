@@ -43,14 +43,14 @@ class Payload:
             for x in item:
                 self.append(x)
         else:
-            if not isinstance(item, str):
-                item = json.dumps(item, cls=MyJSONEncoder)
+            if not isinstance(item, bytes):
+                item = json.dumps(item, cls=MyJSONEncoder).encode(self.charset)
             self.q.append(item)
 
     def pop(self):
         ret = bytes()
         while bool(self) and len(self.q) > 0:
-            item = self.q[0].encode(self.charset)
+            item = self.q[0]
             l = len(ret)
             if l > 0:
                 l += 1 # count sep byte
