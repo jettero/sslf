@@ -1,7 +1,7 @@
 import time, os, re
 import dateutil.parser, dateutil.tz
 
-__all__ = ['AttrDict', 'RateLimit', 'LogLimit']
+__all__ = ['AttrDict', 'RateLimit', 'LogLimit', 'build_tzinfos']
 
 class AttrDict(dict):
     def __getattribute__(self, name):
