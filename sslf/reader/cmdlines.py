@@ -10,7 +10,7 @@ from sslf.reader import (
 log = logging.getLogger('sslf:cmdlines')
 
 class Reader(ReLineEventProcessor):
-    default_sourcetype = 'sslf:lines'
+    default_sourcetype = 'sslf:cmdlines'
     _last_wait = _proc = _cmd = None
     shell_wrapper = False
     sleep_wrapper = False
