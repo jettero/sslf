@@ -232,3 +232,14 @@ class DiskBackedQueue:
             r = self.dq.get()
         self._disk_to_mem()
         return r
+
+    def getz(self, sz=SPLUNK_MAX_MSG):
+        r = self.mq.getz(sz)
+        if r is None:
+            r = self.dq.getz(sz)
+        elif len(r) < sz-1:
+            r2 = self.dq.getz(sz-(len(r)+1))
+            if r2:
+                r += b' ' + r2
+        self._disk_to_mem()
+        return r

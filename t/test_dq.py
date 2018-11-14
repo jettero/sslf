@@ -60,32 +60,53 @@ def test_disk_queue():
     assert dq.getz(8) == b'one two'
     assert dq.getz(8) == b'three'
 
-def test_dq():
-    dq = DQ(TEST_DQ_DIR, mem_size=100, disk_size=100, fresh=True)
+def test_disk_backed_queue():
+    dbq = DiskBackedQueue(TEST_DQ_DIR, mem_size=100, disk_size=100, fresh=True)
     borked = False
 
     with pytest.raises(SSLFQueueTypeError, message="Expecting SSLFQueueTypeError"):
-        dq.put('not work')
+        dbq.put('not work')
 
     with pytest.raises(SSLFQueueCapacityError, message="Expecting SSLFQueueCapacityError"):
         for i in range(22):
-            dq.put(f'{i:10}'.encode())
+            dbq.put(f'{i:10}'.encode())
 
-    assert dq.mq.sz == 100
-    assert dq.dq.sz == 100
+    assert dbq.mq.sz == 100
+    assert dbq.dq.sz == 100
 
     mr,dr = 100,100
     for i in range(20):
         b = f'{i:10}'.encode()
-        assert dq.get() == b
+        assert dbq.get() == b
 
         if dr:
             dr -= 10
         else:
             mr -= 10
 
-        assert dq.mq.sz == mr
-        assert dq.dq.sz == dr
+        assert dbq.mq.sz == mr
+        assert dbq.dq.sz == dr
 
-    assert dq.mq.sz == 0
-    assert dq.dq.sz == 0
+    assert dbq.mq.sz == 0
+    assert dbq.dq.sz == 0
+
+    compare = list()
+    for i in range(15):
+        v = f'{i:10}'.encode()
+        dbq.put(v)
+        compare.append(v)
+    assert dbq.mq.sz == 100
+    assert dbq.dq.sz == 50
+    assert dbq.getz() == dbq.mq.sep.join(compare)
+
+    compare = list()
+    for i in range(15):
+        v = f'{i:10}'.encode()
+        dbq.put(v)
+        compare.append(v)
+    assert dbq.mq.sz == 100
+    assert dbq.dq.sz == 50
+    assert dbq.getz(25) == dbq.mq.sep.join(compare[0:2])
+    compare = compare[2:]
+    assert dbq.mq.sz == 100
+    assert dbq.dq.sz == 30
