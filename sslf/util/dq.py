@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import os
 import logging
 import time
@@ -212,6 +214,11 @@ class DQ:
 
     def _disk_to_mem(self):
         while self.dq.cn > 0:
+            # NOTE: dq.peek() read()s the file but doesn't unlink()
+            # dq.get() read()s the file and unlink()s it
+            # dq.pop() just unlink()s the file
+            # we attempt here to read each file exactly once — until the
+            # stopping condition
             p = self.dq.peek()
             if self.mq.accept(p):
                 self.mq.put(p)
