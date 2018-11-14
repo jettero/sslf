@@ -89,7 +89,7 @@ class MySplunkHEC:
     base_payload = {
         'index':      'main',
         'sourcetype': 'json',
-        'source':     'my-splunk-hec',
+        'source':     'unknown',
         'host':       HOSTNAME,
     }
 
