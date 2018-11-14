@@ -1,12 +1,12 @@
 import pytest
 import os
 
-from sslf.util.dq import DiskQueue, MemQueue, SSLFQueueTypeError
+from sslf.util.dq import DiskQueue, MemQueue, SSLFQueueTypeError, DQ
 
 TEST_DQ_DIR = os.environ.get('TEST_DQ_DIR', f'/tmp/dq.{os.getuid()}')
 
-def test_mq():
-    mq = MemQueue(max_msz=100)
+def test_mem_queue():
+    mq = MemQueue(size=100)
     borked = False
 
     with pytest.raises(SSLFQueueTypeError, message="Expecting SSLFQueueTypeError"):
@@ -32,8 +32,8 @@ def test_mq():
     assert mq.getz(8) == b'one two'
     assert mq.getz(8) == b'three'
 
-def test_dq():
-    dq = DiskQueue(TEST_DQ_DIR, max_dsz=100, fresh=True)
+def test_disk_queue():
+    dq = DiskQueue(TEST_DQ_DIR, size=100, fresh=True)
     borked = False
 
     with pytest.raises(SSLFQueueTypeError, message="Expecting SSLFQueueTypeError"):
@@ -58,3 +58,17 @@ def test_dq():
 
     assert dq.getz(8) == b'one two'
     assert dq.getz(8) == b'three'
+
+def test_dq():
+    dq = DQ(TEST_DQ_DIR, mem_size=100, disk_size=100, fresh=True)
+    borked = False
+
+    with pytest.raises(SSLFQueueTypeError, message="Expecting SSLFQueueTypeError"):
+        dq.put('not work')
+
+    c = 0
+    for i in range(10):
+        assert dq.mq.sz == c*10
+        dq.put(b'0123456789')
+        c += 1
+        assert dq.mq.sz == c*10
