@@ -1,7 +1,7 @@
 import pytest
 import os
 
-from sslf.util.dq import DiskQueue, MemQueue, DQ
+from sslf.util.dq import DiskQueue, MemQueue, DiskBackedQueue
 from sslf.util.dq import SSLFQueueTypeError, SSLFQueueCapacityError
 
 TEST_DQ_DIR = os.environ.get('TEST_DQ_DIR', f'/tmp/dq.{os.getuid()}')

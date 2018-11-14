@@ -193,7 +193,7 @@ class DiskQueue(OKTypesMixin):
     def __len__(self):
         return self.msz
 
-class DQ:
+class DiskBackedQueue:
     def __init__(self, directory, mem_size=DEFAULT_MEMORY_SIZE,
         disk_size=DEFAULT_DISK_SIZE, ok_types=OK_TYPES, fresh=False):
 
