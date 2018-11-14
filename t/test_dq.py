@@ -1,7 +1,8 @@
 import pytest
 import os
 
-from sslf.util.dq import DiskQueue, MemQueue, SSLFQueueTypeError, DQ
+from sslf.util.dq import DiskQueue, MemQueue, DQ
+from sslf.util.dq import SSLFQueueTypeError, SSLFQueueCapacityError
 
 TEST_DQ_DIR = os.environ.get('TEST_DQ_DIR', f'/tmp/dq.{os.getuid()}')
 
@@ -66,9 +67,25 @@ def test_dq():
     with pytest.raises(SSLFQueueTypeError, message="Expecting SSLFQueueTypeError"):
         dq.put('not work')
 
-    c = 0
-    for i in range(10):
-        assert dq.mq.sz == c*10
-        dq.put(b'0123456789')
-        c += 1
-        assert dq.mq.sz == c*10
+    with pytest.raises(SSLFQueueCapacityError, message="Expecting SSLFQueueCapacityError"):
+        for i in range(22):
+            dq.put(f'{i:10}'.encode())
+
+    assert dq.mq.sz == 100
+    assert dq.dq.sz == 100
+
+    mr,dr = 100,100
+    for i in range(20):
+        b = f'{i:10}'.encode()
+        assert dq.get() == b
+
+        if dr:
+            dr -= 10
+        else:
+            mr -= 10
+
+        assert dq.mq.sz == mr
+        assert dq.dq.sz == dr
+
+    assert dq.mq.sz == 0
+    assert dq.dq.sz == 0

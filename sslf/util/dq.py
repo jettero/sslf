@@ -14,7 +14,7 @@ DEFAULT_DISK_SIZE = DEFAULT_MEMORY_SIZE * 1000
 class SSLFQueueTypeError(Exception):
     pass
 
-class SSLFQueueCapcityError(Exception):
+class SSLFQueueCapacityError(Exception):
     pass
 
 class OKTypesMixin:
@@ -50,7 +50,7 @@ class MemQueue(OKTypesMixin):
     def put(self, item):
         self.check_type(item)
         if not self.accept(item):
-            raise SSLFQueueCapcityError('refusing to accept item due to size')
+            raise SSLFQueueCapacityError('refusing to accept item due to size')
         self.mq.append(item)
 
     def get(self):
@@ -128,7 +128,7 @@ class DiskQueue(OKTypesMixin):
     def put(self, item):
         self.check_type(item)
         if not self.accept(item):
-            raise SSLFQueueCapcityError('refusing to accept item due to size')
+            raise SSLFQueueCapacityError('refusing to accept item due to size')
         fanout,remainder = self._fanout(f'{int(time.time())}.{self.cn}')
         d = self._mkdir(fanout)
         f = os.path.join(d, remainder)
@@ -192,14 +192,16 @@ class DiskQueue(OKTypesMixin):
         return self.msz
 
 class DQ:
-    def __init__(self, directory, mem_size=DEFAULT_MEMORY_SIZE, disk_size=DEFAULT_DISK_SIZE, ok_types=OK_TYPES, fresh=False):
+    def __init__(self, directory, mem_size=DEFAULT_MEMORY_SIZE,
+        disk_size=DEFAULT_DISK_SIZE, ok_types=OK_TYPES, fresh=False):
+
         self.dq = DiskQueue(directory, size=disk_size, ok_types=ok_types, fresh=fresh)
         self.mq = MemQueue(size=mem_size, ok_types=ok_types)
 
     def put(self, item):
         try:
             self.mq.put(item)
-        except SSLFQueueCapcityError:
+        except SSLFQueueCapacityError:
             self.dq.put(item)
 
     def peek(self):
@@ -208,16 +210,18 @@ class DQ:
             r = self.dq.peek()
         return r
 
+    def _disk_to_mem(self):
+        while self.dq.cn > 0:
+            p = self.dq.peek()
+            if self.mq.accept(p):
+                self.mq.put(p)
+                self.dq.pop()
+            else:
+                break
+
     def get(self):
         r = self.mq.get()
         if r is None:
             r = self.dq.get()
-        while True:
-            p = self.dq.peek()
-            if self.mq.accept(p):
-                self.mq.append(p)
-                self.dq.pop()
-            else:
-                break
+        self._disk_to_mem()
         return r
-
