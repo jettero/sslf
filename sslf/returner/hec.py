@@ -3,7 +3,7 @@ import os, socket, datetime, urllib3, json, time
 from urllib3.exceptions import InsecureRequestWarning
 import logging
 
-from sslf.util import AttrDict
+from sslf.util import DiskBackedQueue, MemQueue
 
 log = logging.getLogger('sslf:hec')
 
@@ -43,7 +43,10 @@ class MySplunkHEC:
         return o
 
     def __init(self, hec_url, token, verify_ssl=True, use_certifi=False, proxy_url=False,
-        redirect_limit=10, retries=2, conn_timeout=3, read_timeout=2, backoff=3, **base_payload):
+        redirect_limit=10, retries=2, conn_timeout=3, read_timeout=2, backoff=3, 
+        disk_queue=None, **base_payload):
+
+        self.q = MemQueue() if disk_queue is None else DiskBackedQueue(disk_queue)
 
         self.token = token
         self.url   = hec_url
