@@ -20,7 +20,14 @@ class MyJSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self,o)
 
 
-_combine_hec = dict()
+_queue_cache = dict()
+def get_queue(disk_queue, *a):
+    k = (disk_queue,) + a
+    if k in _queue_cache:
+        return _queue_cache[k]
+    q = _queue_cache[k] = MemQueue() if disk_queue is None else DiskBackedQueue(disk_queue)
+    return q
+
 class MySplunkHEC:
     base_payload = {
         'index':      'main',
@@ -31,22 +38,9 @@ class MySplunkHEC:
     charset = 'utf-8'
     path = "/services/collector/event"
 
-    def __new__(cls, *a, **kw):
-        k = a + tuple(sorted(kw.items()))
-        if k in _combine_hec:
-            return _combine_hec[k]
-        o = _combine_hec[k] = super(MySplunkHEC, cls).__new__(cls)
-        # python calls __init__ every time we return the same type as cls
-        # we only want to call it when we make an actually new object
-        # so we rename __init__ as an easy way to control its invocation
-        o.__init(*a,**kw)
-        return o
-
-    def __init(self, hec_url, token, verify_ssl=True, use_certifi=False, proxy_url=False,
-        redirect_limit=10, retries=2, conn_timeout=3, read_timeout=2, backoff=3, 
+    def __init__(self, hec_url, token, verify_ssl=True, use_certifi=False, proxy_url=False,
+        redirect_limit=10, retries=2, conn_timeout=3, read_timeout=2, backoff=3,
         disk_queue=None, **base_payload):
-
-        self.q = MemQueue() if disk_queue is None else DiskBackedQueue(disk_queue)
 
         self.token = token
         self.url   = hec_url
@@ -89,6 +83,7 @@ class MySplunkHEC:
             self.pool_manager = urllib3.PoolManager(**poolmanager_opts)
 
         self.base_payload.update(base_payload)
+        self.q = get_queue(disk_queue, self.url, self.token)
 
     def __str__(self):
         return f'HEC({self.url}{self.path})'
