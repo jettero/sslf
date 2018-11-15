@@ -2,18 +2,12 @@
 import os, socket, datetime, urllib3, json, time
 from urllib3.exceptions import InsecureRequestWarning
 import logging
-from collections import deque
 
 from sslf.util import AttrDict
 
 log = logging.getLogger('sslf:hec')
 
 HOSTNAME = socket.gethostname()
-
-# try to make sure each send is this big
-# (but still timely)
-_max_content_bytes = 100000 # bytes
-_delay_send_wait_time = 500 # ms
 
 class MyJSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -26,65 +20,6 @@ class MyJSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self,o)
 
 
-class Payload:
-    max_bytes = _max_content_bytes
-    sep = b' '
-    charset = 'utf-8'
-
-    def __init__(self, *items):
-        # we compose to ensure correct encoding on append()
-        # without worring about extend() (et al?)
-        self.q = deque()
-        for item in items:
-            self.q.append(item)
-
-    def append(self, item):
-        if isinstance(item, Payload):
-            for x in item:
-                self.append(x)
-        else:
-            if not isinstance(item, bytes):
-                item = json.dumps(item, cls=MyJSONEncoder).encode(self.charset)
-            self.q.append(item)
-
-    def pop(self):
-        ret = bytes()
-        while bool(self) and len(self.q) > 0:
-            item = self.q[0]
-            l = len(ret)
-            if l > 0:
-                l += 1 # count sep byte
-            l += len(item)
-            if l > self.max_bytes:
-                break
-            self.q.popleft()
-            if ret:
-                ret += self.sep
-            ret += item
-        return ret
-
-    def __iter__(self):
-        while self:
-            yield self.pop()
-
-    def __bool__(self):
-        return len(self.q) > 0
-
-    def __len__(self):
-        s = len(self.q)-1 # start with the separators
-        for item in self.q:
-            s += len(item) # and the length of the items
-        return s
-
-    def __repr__(self):
-        l = len(self.q)
-        if l == 0:
-            return 'Payload<empty>'
-        if l == 1:
-            return 'Payload<1 item>'
-        return f'Payload<{l} items>'
-
-
 class MySplunkHEC:
     base_payload = {
         'index':      'main',
@@ -92,7 +27,7 @@ class MySplunkHEC:
         'source':     'unknown',
         'host':       HOSTNAME,
     }
-
+    charset = 'utf-8'
     path = "/services/collector/event"
 
     def __init__(self, hec_url, token, verify_ssl=True, use_certifi=False, proxy_url=False,
@@ -153,27 +88,26 @@ class MySplunkHEC:
             self.url, self.path, dat, fake_headers)
         return self.pool_manager.request('POST', self.url + self.path, body=dat, headers=headers)
 
-    def encode_events(self, *events, **payload_data):
-        payload = Payload()
-
-        for event in events:
-            dat = self.base_payload.copy()
-            dat.update(payload_data)
-            dat['event'] = event
-            if not dat.get('time') and isinstance(event, dict):
-                dat['time'] = event.get('time')
-            if not dat.get('time'):
-                dat['time'] = datetime.datetime.now()
-            payload.append(dat)
-
-        return payload
+    def encode_event(self, event, **payload_data):
+        jdargs = payload_data.pop('_jdargs', {})
+        dat = self.base_payload.copy()
+        dat.update(payload_data)
+        dat['event'] = event
+        if not dat.get('time') and isinstance(event, dict):
+            dat['time'] = event.get('time')
+        if not dat.get('time'):
+            dat['time'] = datetime.datetime.now()
+        return json.dumps(dat, cls=MyJSONEncoder, **jdargs).encode(self.charset)
+    encode_payload = encode_event
 
     def _decode_res(self, res):
         try:
-            dat = json.loads(res.data.decode('utf-8'))
+            dat = json.loads(res.data.decode(self.charset))
 
             if dat['code'] != 0:
                 log.error(f'Splunk HEC Error code={code}: {text}'.format(**dat))
+
+            return dat
 
         except json.JSONDecodeError as e:
             log.error('Unable to decode reply from Splunk HEC: %s', e)
@@ -181,25 +115,18 @@ class MySplunkHEC:
     def _send_event(self, encoded_payload):
         res = self._post_message(encoded_payload)
 
+        # 400 can be ok, further checking required Splunk will sometimes give a
+        # data-format error or similar in the json
         if res.status == 400:
-            self._decode(res)
-            return
+            return self._decode_res(res)
 
         if res.status < 200 or res.status > 299:
             log.error(f'HTTP ERROR {res.status}: {res.data}')
 
-        self._decode_res(res)
+        return self._decode_res(res)
 
-    def send_event(self, *events, **payload_data):
-        def _preprocess_event(event):
-            if isinstance(event, dict) and 'event' in event:
-                payload_data.update(**event)
-                event = payload_data.pop('event')
-            return event
-        events = [ _preprocess_event(e) for e in events ]
-        payload = self.encode_events(*events, **payload_data)
-
-        while payload:
-            self._send_event(payload.pop())
+    def send_event(self, event, **payload_data):
+        encoded_payload = self.encode_event(event, **payload_data)
+        return self._send_event(encoded_payload)
 
 HEC = MySplunkHEC
