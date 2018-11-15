@@ -207,14 +207,16 @@ class Daemon(daemonize.Daemonize):
 
     def step(self):
         for pv in self.paths.values():
+            pv.hec.flush()
+        for pv in self.paths.values():
             if pv.reader.ready:
                 log.debug("%s says its ready, reading", pv.reader)
                 for evr in pv.reader.read():
-                    log.debug("received event from %s, sending to hec %s", pv.reader, pv.hec)
+                    log.debug("received event from %s, queueing for hec %s", pv.reader, pv.hec)
                     try:
-                        pv.hec.send_event(evr)
+                        pv.hec.queue_event(evr)
                     except Exception as e:
-                        log.error("error sending event to %s: %s", pv.hec, e)
+                        log.error("error queueing event for %s: %s", pv.hec, e)
 
     def loop(self):
         while True:

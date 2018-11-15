@@ -3,7 +3,7 @@ import os, socket, datetime, urllib3, json, time
 from urllib3.exceptions import InsecureRequestWarning
 import logging
 
-from sslf.util import DiskBackedQueue, MemQueue
+from sslf.util import DiskBackedQueue, MemQueue, SSLFQueueCapacityError
 
 log = logging.getLogger('sslf:hec')
 
@@ -138,5 +138,25 @@ class MySplunkHEC:
     def send_event(self, event, **payload_data):
         encoded_payload = self.encode_event(event, **payload_data)
         return self._send_event(encoded_payload)
+
+    def queue_event(self, event, **payload_data):
+        encoded_payload = self.encode_event(event, **payload_data)
+        try:
+            self.q.put(encoded_payload)
+        except SSLFQueueCapacityError:
+            log.error("queue overflow during queue_event()")
+
+    def flush(self):
+        if self.q.cn > 0:
+            s = 0
+            c = 1
+            while True:
+                payloadz = self.q.getz()
+                if not payloadz:
+                    break
+                self._send_event(payloadz)
+                s += len(payloadz)
+                c += 1
+            log.info('sent %d byte(s) to HEC(%s) in %d batch(s)', s, self.url, c)
 
 HEC = MySplunkHEC
