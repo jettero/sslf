@@ -6,6 +6,8 @@ import time
 import shutil
 from collections import deque
 
+__all__ = ['SSLFQueueTypeError', 'SSLFQueueCapacityError', 'MemQueue', 'DiskQueue', 'DiskBackedQueue']
+
 log = logging.getLogger(__name__)
 
 OK_TYPES = (bytes,bytearray,)
