@@ -147,16 +147,16 @@ class MySplunkHEC:
             log.error("queue overflow during queue_event()")
 
     def flush(self):
-        if self.q.cn > 0:
-            s = 0
-            c = 1
-            while True:
-                payloadz = self.q.getz()
-                if not payloadz:
-                    break
-                self._send_event(payloadz)
-                s += len(payloadz)
-                c += 1
+        s = 0
+        c = 0
+        while self.q.cn > 0:
+            payloadz = self.q.getz()
+            if not payloadz:
+                break
+            self._send_event(payloadz)
+            s += len(payloadz)
+            c += 1
+        if c > 0:
             log.info('sent %d byte(s) to HEC(%s) in %d batch(s)', s, self.url, c)
 
 HEC = MySplunkHEC
