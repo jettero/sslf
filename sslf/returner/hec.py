@@ -20,6 +20,7 @@ class MyJSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self,o)
 
 
+_combine_hec = dict()
 class MySplunkHEC:
     base_payload = {
         'index':      'main',
@@ -30,7 +31,18 @@ class MySplunkHEC:
     charset = 'utf-8'
     path = "/services/collector/event"
 
-    def __init__(self, hec_url, token, verify_ssl=True, use_certifi=False, proxy_url=False,
+    def __new__(cls, *a, **kw):
+        k = a + tuple(sorted(kw.items()))
+        if k in _combine_hec:
+            return _combine_hec[k]
+        o = _combine_hec[k] = super(MySplunkHEC, cls).__new__(cls)
+        # python calls __init__ every time we return the same type as cls
+        # we only want to call it when we make an actually new object
+        # so we rename __init__ as an easy way to control its invocation
+        o.__init(*a,**kw)
+        return o
+
+    def __init(self, hec_url, token, verify_ssl=True, use_certifi=False, proxy_url=False,
         redirect_limit=10, retries=2, conn_timeout=3, read_timeout=2, backoff=3, **base_payload):
 
         self.token = token
