@@ -30,6 +30,7 @@ setup(name='sslf',
         'urllib3',
         'daemonize',
         'python-dateutil',
+        'simplejson',
     ],
     entry_points={
         'console_scripts': [

@@ -1,5 +1,6 @@
 
-import os, socket, datetime, urllib3, json, time
+import os, socket, datetime, urllib3, time
+import simplejson as json
 from urllib3.exceptions import InsecureRequestWarning
 import logging
 

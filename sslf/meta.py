@@ -1,5 +1,5 @@
 import os
-import json
+import simplejson as json
 import logging
 
 log = logging.getLogger('sslf:meta')
