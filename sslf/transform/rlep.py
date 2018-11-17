@@ -1,6 +1,6 @@
 import logging
 
-log = logging.getLogger("sslf:rlep")
+log = logging.getLogger("sslf:trans:rlep")
 
 from sslf.re   import ReEngine
 from sslf.util import AttrDict, DateParser
