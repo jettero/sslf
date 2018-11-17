@@ -6,7 +6,7 @@ import time
 from sslf.reader import ( MetaData, LogLimit, LOG_RLIMIT )
 from sslf.transform.rlep import ReLineEventProcessor
 
-log = logging.getLogger('sslf:filelines')
+log = logging.getLogger('sslf:read:filelines')
 
 class Sig:
     def __init__(self, h='', b=0):

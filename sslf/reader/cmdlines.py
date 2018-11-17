@@ -6,7 +6,7 @@ import time
 from sslf.reader import ( RateLimit, AttrDict, PROC_RESTART_RLIMIT )
 from sslf.transform.rlep import ReLineEventProcessor
 
-log = logging.getLogger('sslf:cmdlines')
+log = logging.getLogger('sslf:read:cmdlines')
 
 class Reader(ReLineEventProcessor):
     default_sourcetype = 'sslf:cmdlines'
