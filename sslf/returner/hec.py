@@ -157,6 +157,6 @@ class MySplunkHEC:
             s += len(payloadz)
             c += 1
         if c > 0:
-            log.info('sent %d bytes to HEC(%s) in %d batch(s)', s, self.url, c)
+            log.info('sent events to %s, %d bytes, %d batches', self.url, s, c)
 
 HEC = MySplunkHEC
