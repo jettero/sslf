@@ -1,9 +1,8 @@
 
 from sslf.re import ReEngine
 
-TEST  = "This is my pattern 2+2=4; Nyan Cat."
-
 def test_RE():
+    TEST = "This is my pattern 2+2=4; Nyan Cat."
     RE = ReEngine(p1=r'(is).*Cat')
     assert RE.compute_fields(TEST) == {1: 'is'}
 
@@ -25,20 +24,22 @@ def test_RE():
         1: '2',
     }
 
-TEST2 = {'area1': 'test pattern', 'area2': 'another test pattern'}
 def test_RE2():
+    TEST2 = {'area1': 'test pattern', 'area2': 'another test pattern'}
     area_patterns = {
-        'p1:area1': r'(?P<p1k>test)\s+(?P<p1v>\S+)',
-        'p2:area2': r'(?P<p2prefix>\S+)\s+(?P<p2k>test)\s+(?P<p2v>\S+)'
+        'p1': '(?P<v0>another test pattern)',
+        'p2:area1': r'(?P<k2>test)\s+(?P<v2>\S+)',
+        'p3:area2': r'(?P<prefix>\S+)\s+(?P<k3>test)\s+(?P<v3>\S+)'
     }
     RE = ReEngine(**area_patterns)
 
     t2c = {
-        'p1k': 'test',
-        'p1v': 'pattern',
-        'p2prefix': 'another',
-        'p2k': 'test',
-        'p2v': 'pattern',
+        'v0': 'another test pattern',
+        'k2': 'test',
+        'v2': 'pattern',
+        'prefix': 'another',
+        'k3': 'test',
+        'v3': 'pattern',
     }
     t2c.update(TEST2)
 

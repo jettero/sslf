@@ -58,16 +58,24 @@ class ReEngine:
                 _, _input, _flags = m.groups()
             else:
                 _, _input, _flags = rk, None, None
-            i = ret.get(_input, input) if _input else input
-            for r in self._re[rk]:
-                m = r.search(i) if isinstance(i, (str,bytes,bytearray)) else None
-                if m:
-                    gd = m.groupdict()
-                    if gd:
-                        ret.update(gd)
-                    else:
-                        for k,v in enumerate(m.groups()):
-                            ret[k+1] = v
+
+            ii = ret.get(_input, input) if _input else input
+            if isinstance(ii, dict):
+                ii = tuple(ii.values())
+            if not isinstance(ii, (list,tuple)):
+                ii = (ii,)
+
+            for i in ii:
+                if isinstance(i, (str,bytes,bytearray)):
+                    for r in self._re[rk]:
+                        m = r.search(i)
+                        if m:
+                            gd = m.groupdict()
+                            if gd:
+                                ret.update(gd)
+                            else:
+                                for k,v in enumerate(m.groups()):
+                                    ret[k+1] = v
         return ret
 
     def __call__(self, input):
