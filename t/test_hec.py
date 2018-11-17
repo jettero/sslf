@@ -1,6 +1,7 @@
 
+from sslf.util import AttrDict
 from sslf.returner.hec import HEC
-import json
+import simplejson as json
 
 def test_payload():
     h = HEC('https://whatever', 'secret-token')
@@ -18,6 +19,34 @@ def test_payload():
 
     # they should come out the same
     assert hec_encoding == test_encoding
+
+    # Lastly, make sure if we give an AttrDict(event='blah') to h.encode_payload(),
+    # it still does the right thing(s)
+    evr = AttrDict(event='supz mang', time=24, source='/something/strange',
+        host='localhost', fields={'lolol': 'yes'})
+    epb = h.encode_payload(evr)
+    hep = json.loads(epb.decode('utf-8'))
+    assert hep == { 'event': 'supz mang', 'source': '/something/strange',
+        'fields': {'lolol': 'yes'}, 'index': 'main', 'sourcetype': 'json',
+        'time': 24, 'host': 'localhost' }
+
+    # still the right thing if the time is in the event
+    evr = AttrDict(event={'msg': 'supz mang', 'time': 24},
+        source='/something/strange', host='localhost', fields={'lolol': 'yes'})
+    epb = h.encode_payload(evr)
+    hep = json.loads(epb.decode('utf-8'))
+    assert hep == { 'event': {'msg': 'supz mang', 'time': 24}, 'source':
+        '/something/strange', 'fields': {'lolol': 'yes'}, 'index': 'main',
+        'sourcetype': 'json', 'time': 24, 'host': 'localhost' }
+
+    # still the right thing if the time is in the extracted fields
+    evr = AttrDict(event='supz mang', source='/something/strange', host='localhost',
+        fields={'lolol': 'yes', 'time': 24})
+    epb = h.encode_payload(evr)
+    hep = json.loads(epb.decode('utf-8'))
+    assert hep == { 'event': 'supz mang', 'source': '/something/strange',
+        'fields': {'time': 24, 'lolol': 'yes'}, 'index': 'main',
+        'sourcetype': 'json', 'time': 24, 'host': 'localhost' }
 
 def test_combine():
     h1 = HEC('https://whatever', 'secret-token')

@@ -221,7 +221,7 @@ class Daemon(daemonize.Daemonize):
     def loop(self):
         while True:
             self.step()
-            time.sleep(1)
+            time.sleep(0.5)
 
     @property
     def log_level_n(self):

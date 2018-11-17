@@ -1,8 +1,8 @@
 
 from sslf.reader.cmdlines import Reader as CommandLinesReader
-from sslf.transform.json import JsonEventProcessor
+from sslf.transform.json import JSONEventProcessor
 
-class Reader(CommandLinesReader, JsonEventProcessor):
+class Reader(CommandLinesReader, JSONEventProcessor):
 
     def read(self):
         l = True

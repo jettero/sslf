@@ -103,11 +103,16 @@ class MySplunkHEC:
         jdargs = payload_data.pop('_jdargs', {})
         dat = self.base_payload.copy()
         dat.update(payload_data)
-        dat['event'] = event
-        if not dat.get('time') and isinstance(event, dict):
-            dat['time'] = event.get('time')
-        if not dat.get('time'):
-            dat['time'] = datetime.datetime.now()
+        if isinstance(event, dict) and 'event' in event:
+            dat.update(event)
+            event = dat['event']
+        else:
+            dat['event'] = event
+        if 'time' not in dat:
+            _e = event if isinstance(event, dict) else dict()
+            dat['time'] = dat.get('fields', {}).get('time', _e.get('time'))
+            if not dat.get('time'):
+                dat['time'] = datetime.datetime.now()
         return json.dumps(dat, cls=MyJSONEncoder, **jdargs).encode(self.charset)
     encode_payload = encode_event
 
@@ -124,6 +129,10 @@ class MySplunkHEC:
             log.error('Unable to decode reply from Splunk HEC: %s', e)
 
     def _send_event(self, encoded_payload):
+        if os.environ.get('SSLF_DEBUG_HEC_SEND_LOG'):
+            log.info('writing encoded_payload(s) to /tmp/sslf-hec-send.log')
+            with open('/tmp/sslf-hec-send.log', 'ab') as fh:
+                fh.write(encoded_payload + b'\n')
         res = self._post_message(encoded_payload)
 
         # 400 can be ok, further checking required Splunk will sometimes give a
