@@ -5,7 +5,6 @@ from sslf.util import AttrDict
 def test_jsont():
     t = JSONEventProcessor()
     t.setup_json(config={
-        're_r1':        r'(?P<blah1>o\w+)',
         're_r2:field1': r'(?P<blah2>\w+)',
         're_r3:field2': r'(?P<blah3>\w+)',
     })
@@ -13,4 +12,4 @@ def test_jsont():
 
     evr = t.grok_json('{"field1": "one", "field2": "two"}')
     assert isinstance(evr, AttrDict)
-    assert evr.fields == {'blah1':'one', 'blah2': 'one', 'blah3': 'two'}
+    assert evr.fields == {'blah2': 'one', 'blah3': 'two'}

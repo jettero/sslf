@@ -62,24 +62,22 @@ class ReEngine:
         fields = dict()
 
         for rname,ri in self._re.items():
-            ii = searchable.get(ri.field, input) if ri.field else input
-            if isinstance(ii, dict):
-                ii = tuple(ii.values())
-            if not isinstance(ii, (list,tuple)):
-                ii = (ii,)
-
-            for i in ii:
-                if isinstance(i, (str,bytes,bytearray)):
-                    m = ri.re.search(i)
-                    if m:
-                        gd = m.groupdict()
-                        if gd:
-                            fields.update(gd)
-                            searchable.update(gd)
-                        else:
-                            for k,v in enumerate(m.groups()):
-                                fields[k+1] = v
-                                searchable[k+1] = v
+            input = searchable.get(ri.field, input) if ri.field else input
+            if isinstance(input, dict):
+                input = input.values()
+            if isinstance(input, (tuple,list)):
+                input = ' '.join(input)
+            if isinstance(input, str):
+                m = ri.re.search(input)
+                if m:
+                    gd = m.groupdict()
+                    if gd:
+                        fields.update(gd)
+                        searchable.update(gd)
+                    else:
+                        for k,v in enumerate(m.groups()):
+                            fields[k+1] = v
+                            searchable[k+1] = v
         return fields
 
     def __call__(self, input):
