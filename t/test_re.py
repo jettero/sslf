@@ -1,7 +1,7 @@
 
 from sslf.re import ReEngine
 
-TEST = "This is my pattern 2+2=4; Nyan Cat."
+TEST  = "This is my pattern 2+2=4; Nyan Cat."
 
 def test_RE():
     RE = ReEngine(p1=r'(is).*Cat')
@@ -24,3 +24,22 @@ def test_RE():
         'cat': 'Cat',
         1: '2',
     }
+
+TEST2 = {'area1': 'test pattern', 'area2': 'another test pattern'}
+def test_RE2():
+    area_patterns = {
+        'p1:area1': r'(?P<p1k>test)\s+(?P<p1v>\S+)',
+        'p2:area2': r'(?P<p2prefix>\S+)\s+(?P<p2k>test)\s+(?P<p2v>\S+)'
+    }
+    RE = ReEngine(**area_patterns)
+
+    t2c = {
+        'p1k': 'test',
+        'p1v': 'pattern',
+        'p2prefix': 'another',
+        'p2k': 'test',
+        'p2v': 'pattern',
+    }
+    t2c.update(TEST2)
+
+    assert RE.compute_fields(TEST2) == t2c
