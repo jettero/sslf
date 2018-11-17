@@ -3,9 +3,8 @@ import subprocess
 import select
 import logging
 import time
-from sslf.reader import (
-    RateLimit, AttrDict, PROC_RESTART_RLIMIT,
-    ReLineEventProcessor)
+from sslf.reader import ( RateLimit, AttrDict, PROC_RESTART_RLIMIT )
+from sslf.transform.rlep import ReLineEventProcessor
 
 log = logging.getLogger('sslf:cmdlines')
 

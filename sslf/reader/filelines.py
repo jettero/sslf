@@ -3,9 +3,8 @@ import shelve
 import hashlib
 import logging
 import time
-from sslf.reader import (
-    MetaData, LogLimit, LOG_RLIMIT,
-    ReLineEventProcessor )
+from sslf.reader import ( MetaData, LogLimit, LOG_RLIMIT )
+from sslf.transform.rlep import ReLineEventProcessor
 
 log = logging.getLogger('sslf:filelines')
 
