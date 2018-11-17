@@ -41,6 +41,5 @@ def test_RE2():
         'k3': 'test',
         'v3': 'pattern',
     }
-    t2c.update(TEST2)
 
     assert RE.compute_fields(TEST2) == t2c

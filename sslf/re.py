@@ -50,7 +50,8 @@ class ReEngine:
                 {'blah': 'my whatever', 'k2': 'whatever'}
         '''
 
-        ret = input if isinstance(input,dict) else dict()
+        searchable = input if isinstance(input,dict) else dict()
+        fields = dict()
 
         for rk in self._re:
             m = FIELD_NAME_FORMAT.match(rk)
@@ -59,7 +60,7 @@ class ReEngine:
             else:
                 _, _input, _flags = rk, None, None
 
-            ii = ret.get(_input, input) if _input else input
+            ii = searchable.get(_input, input) if _input else input
             if isinstance(ii, dict):
                 ii = tuple(ii.values())
             if not isinstance(ii, (list,tuple)):
@@ -72,11 +73,13 @@ class ReEngine:
                         if m:
                             gd = m.groupdict()
                             if gd:
-                                ret.update(gd)
+                                fields.update(gd)
+                                searchable.update(gd)
                             else:
                                 for k,v in enumerate(m.groups()):
-                                    ret[k+1] = v
-        return ret
+                                    fields[k+1] = v
+                                    searchable[k+1] = v
+        return fields
 
     def __call__(self, input):
         return self.compute_fields(input)
