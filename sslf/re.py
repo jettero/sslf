@@ -1,8 +1,10 @@
 
 import re
 import logging
+from collections import namedtuple
 
-FIELD_NAME_FORMAT = re.compile(r'^(?P<field_name>[^:+]+?)(?::(?P<input>.+?))?(?:\+(?P<flags>.+))?$')
+REGEX_FIELDS = re.compile(r'^(?P<regex_name>[^:+]+?)(?::(?P<input>.+?))?(?:\+(?P<flags>.+))?$')
+REItem = namedtuple('REItem', ['re', 'field', 'flags'])
 
 class ReEngine:
     def __init__(self, **re_config):
@@ -15,13 +17,19 @@ class ReEngine:
 
     def add_re(self, **re_config):
         for rk in re_config:
-            if rk not in self._re:
-                self._re[rk] = list()
+            m = REGEX_FIELDS.match(rk)
+            if m:
+                rname, infield, flags = m.groups()
+            else:
+                rname, infield, flags = rk,None,None
+            if rname.startswith('re_') and rname != 're_':
+                rname = rname[3:]
+
             try:
-                self._re[rk].append( re.compile(re_config[rk]) )
+                self._re[rname] = REItem(re=re.compile(re_config[rk]), field=infield, flags=flags)
             except Exception as e:
                 self.logger.error('error compiling regular expression (%s: %s): %s',
-                    rk, re_config[rk], e)
+                    rname, re_config[rk], e)
 
     def compute_fields(self, input):
         ''' take a string argument `input` and apply patterns to it
@@ -53,14 +61,8 @@ class ReEngine:
         searchable = input if isinstance(input,dict) else dict()
         fields = dict()
 
-        for rk in self._re:
-            m = FIELD_NAME_FORMAT.match(rk)
-            if m:
-                _, _input, _flags = m.groups()
-            else:
-                _, _input, _flags = rk, None, None
-
-            ii = searchable.get(_input, input) if _input else input
+        for rname,ri in self._re.items():
+            ii = searchable.get(ri.field, input) if ri.field else input
             if isinstance(ii, dict):
                 ii = tuple(ii.values())
             if not isinstance(ii, (list,tuple)):
@@ -68,17 +70,16 @@ class ReEngine:
 
             for i in ii:
                 if isinstance(i, (str,bytes,bytearray)):
-                    for r in self._re[rk]:
-                        m = r.search(i)
-                        if m:
-                            gd = m.groupdict()
-                            if gd:
-                                fields.update(gd)
-                                searchable.update(gd)
-                            else:
-                                for k,v in enumerate(m.groups()):
-                                    fields[k+1] = v
-                                    searchable[k+1] = v
+                    m = ri.re.search(i)
+                    if m:
+                        gd = m.groupdict()
+                        if gd:
+                            fields.update(gd)
+                            searchable.update(gd)
+                        else:
+                            for k,v in enumerate(m.groups()):
+                                fields[k+1] = v
+                                searchable[k+1] = v
         return fields
 
     def __call__(self, input):
