@@ -13,3 +13,4 @@ def test_jsont():
     evr = t.grok_json('{"field1": "one", "field2": "two"}')
     assert isinstance(evr, AttrDict)
     assert evr.fields == {'blah2': 'one', 'blah3': 'two'}
+    assert evr.event  == {'field1': 'one', 'field2': 'two'}

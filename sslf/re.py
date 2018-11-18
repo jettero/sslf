@@ -1,6 +1,7 @@
 
 import re
 import logging
+import copy
 from collections import namedtuple, deque
 
 REGEX_FIELDS = re.compile(r'^(?P<regex_name>[^:+]+?)(?::(?P<input>.+?))?(?:\+(?P<flags>.+))?$')
@@ -57,7 +58,7 @@ class ReEngine:
                 {'blah': 'my whatever', 'k2': 'whatever'}
         '''
 
-        searchable = input if isinstance(input, dict) else dict()
+        searchable = copy.deepcopy(input) if isinstance(input, dict) else dict()
         fields = dict()
 
         todo = deque( self._re.items() )
