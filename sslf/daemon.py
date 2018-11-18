@@ -193,7 +193,21 @@ class Daemon(daemonize.Daemonize):
     def read_config(self):
         if not self.config_file:
             return
-        config = configparser.ConfigParser()
+
+        config = configparser.ConfigParser(
+            allow_no_value=True,
+            delimiters=('=',),
+            inline_comment_prefixes=('#',),
+            comment_prefixes=('#',),
+        )
+
+        def gigity(x):
+            s = x.split(':')
+            s[0] = s[0].lower()
+            return ':'.join(s)
+
+        config.optionxform = gigity
+
         try:
             log.debug("parsing config_file=%s", self.config_file)
             config.read(self.config_file)
