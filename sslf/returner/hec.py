@@ -154,7 +154,7 @@ class MySplunkHEC:
         try:
             self.q.put(encoded_payload)
         except SSLFQueueCapacityError:
-            log.error("queue overflow during queue_event()")
+            log.warn("queue overflow during queue_event() … discarding event")
 
     def flush(self):
         s = 0
