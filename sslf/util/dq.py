@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 OK_TYPES = (bytes,bytearray,)
 SPLUNK_MAX_MSG = 100000
-DEFAULT_MEMORY_SIZE = SPLUNK_MAX_MSG * 5
+DEFAULT_MEMORY_SIZE = SPLUNK_MAX_MSG * 15
 DEFAULT_DISK_SIZE = DEFAULT_MEMORY_SIZE * 1000
 
 class SSLFQueueTypeError(Exception):
