@@ -11,9 +11,9 @@ __all__ = ['SSLFQueueTypeError', 'SSLFQueueCapacityError', 'MemQueue', 'DiskQueu
 log = logging.getLogger(__name__)
 
 OK_TYPES = (bytes,bytearray,)
-SPLUNK_MAX_MSG = 100000
-DEFAULT_MEMORY_SIZE = SPLUNK_MAX_MSG * 5
-DEFAULT_DISK_SIZE = DEFAULT_MEMORY_SIZE * 1000
+SPLUNK_MAX_MSG = 100000 # 100k
+DEFAULT_MEMORY_SIZE = SPLUNK_MAX_MSG * 5 # 500k
+DEFAULT_DISK_SIZE = DEFAULT_MEMORY_SIZE * 1000 # 0.5GB
 
 class SSLFQueueTypeError(Exception):
     pass
