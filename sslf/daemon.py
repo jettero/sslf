@@ -235,7 +235,7 @@ class Daemon(daemonize.Daemonize):
     def loop(self):
         while True:
             self.step()
-            time.sleep(0.5)
+            time.sleep(0.5) # XXX: loop delay should be configurable (affects disk queueing and the like)
 
     @property
     def log_level_n(self):

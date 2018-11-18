@@ -26,6 +26,8 @@ def get_queue(disk_queue, *a):
     k = (disk_queue,) + a
     if k in _queue_cache:
         return _queue_cache[k]
+    # XXX: the instanciation of the MQ or DBQ should consider/use options such as:
+    # mem_size=blah disk_size=blah
     q = _queue_cache[k] = MemQueue() if disk_queue is None else DiskBackedQueue(disk_queue)
     return q
 
