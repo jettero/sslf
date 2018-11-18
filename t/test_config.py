@@ -1,12 +1,15 @@
-import sslf
 import sys
 import logging
+import pytest
+
+import sslf
+from sslf.daemon import DaemonConfig
 
 log = logging.getLogger('sslf:test')
 
-def test_setup(nc_config):
-    sys.argv = [ sys.argv[0] ]
+sys.argv = [ sys.argv[0] ]
 
+def test_setup1(nc_config):
     log.debug("-----=: setup()")
     sslf = nc_config() # Daemon.config_file = None; Daemon().update_config()
     assert sslf.config_file == sslf.__class__.config_file
@@ -25,15 +28,5 @@ def test_setup(nc_config):
     assert sslf.config_file == 't/sslf.3'
 
     log.debug("-----=: setup(config=t/sslf.3) --> fail")
-    fail = None
-    try: sslf = nc_config(config='t/sslf.3')
-    except Exception as e:
-        fail = e
-    assert 'valid config' in str(fail)
-
-# def test_read_file():
-#     sslf = sslf.setup(config_file='t/test1.conf')
-#     assert sslf.config_file == 't/test1.conf'
-#     assert sslf.hec == 'https://localhost:54321/'
-#     assert set(sslf.paths.keys()) == set(['/tmp/funny-little.log'])
-#     assert set(sslf.paths.get('/tmp/funny-little.log',{}).keys()) == set(['re_f1', 'reader', 'hec'])
+    with pytest.raises(DaemonConfig, message="Expecting DaemonConfig error", match=r'.*?valid config.*'):
+        sslf = nc_config(config='t/sslf.3')

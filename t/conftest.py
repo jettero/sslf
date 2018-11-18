@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import pytest
 import os, shutil
 
@@ -46,6 +48,11 @@ def nc_config():# no-[default]-config config()
     orig = sslf.Daemon.config_file
     sslf.Daemon.config_file = ''
     def _s(*a, **kw):
+        # in test_something(nc_config), nc_config is this lambda
+        # so nc_config('-c', 'whatever.conf')
+        # or nc_config(config_file='blah')
+        # or nc_config(config='broken') # should be config={…)
+        # is handed to Daemon().update_path_config() here:
         return sslf.Daemon(*a, **kw).update_path_config()
     yield _s
     sslf.Daemon.config_file = orig
