@@ -6,7 +6,10 @@ import time
 import shutil
 from collections import deque
 
-__all__ = ['SSLFQueueTypeError', 'SSLFQueueCapacityError', 'MemQueue', 'DiskQueue', 'DiskBackedQueue']
+__all__ = [
+    'SSLFQueueTypeError', 'SSLFQueueCapacityError', 'MemQueue', 'DiskQueue',
+    'DiskBackedQueue', 'DEFAULT_MEMORY_SIZE', 'DEFAULT_DISK_SIZE',
+]
 
 log = logging.getLogger(__name__)
 

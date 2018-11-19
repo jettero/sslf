@@ -3,8 +3,12 @@ import os, socket, datetime, urllib3, time
 import simplejson as json
 from urllib3.exceptions import InsecureRequestWarning
 import logging
+import hashlib
 
-from sslf.util import DiskBackedQueue, MemQueue, SSLFQueueCapacityError
+from sslf.util import (
+    DiskBackedQueue, MemQueue, SSLFQueueCapacityError,
+    DEFAULT_MEMORY_SIZE, DEFAULT_DISK_SIZE,
+)
 
 log = logging.getLogger('sslf:hec')
 
@@ -22,13 +26,18 @@ class MyJSONEncoder(json.JSONEncoder):
 
 
 _queue_cache = dict()
-def get_queue(disk_queue, *a):
-    k = (disk_queue,) + a
+def get_queue(disk_queue, *a, mem_size=DEFAULT_MEMORY_SIZE, disk_size=DEFAULT_DISK_SIZE):
+    k = (disk_queue,mem_size) + a
+    if disk_queue is not None:
+        k = k + (disk_size,)
     if k in _queue_cache:
         return _queue_cache[k]
     # XXX: the instanciation of the MQ or DBQ should consider/use options such as:
     # mem_size=blah disk_size=blah
-    q = _queue_cache[k] = MemQueue() if disk_queue is None else DiskBackedQueue(disk_queue)
+    if disk_queue is None:
+        q = _queue_cache[k] = MemQueue(size=mem_size)
+    else:
+        q = _queue_cache[k] = DiskBackedQueue(disk_queue, mem_size=mem_size, disk_size=disk_size)
     return q
 
 class MySplunkHEC:
@@ -43,7 +52,8 @@ class MySplunkHEC:
 
     def __init__(self, hec_url, token, verify_ssl=True, use_certifi=False, proxy_url=False,
         redirect_limit=10, retries=2, conn_timeout=3, read_timeout=2, backoff=3,
-        disk_queue=None, **base_payload):
+        disk_queue=None, mem_size=DEFAULT_MEMORY_SIZE, disk_size=DEFAULT_DISK_SIZE,
+        **base_payload):
 
         self.token = token
         self.url   = hec_url
