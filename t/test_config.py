@@ -39,3 +39,4 @@ def test_config(nc_config):
 
     jdc = sslf.paths.get('/journald', {})
     assert 're_ts1:SYSLOG_PID' in jdc
+    assert sslf.step_interval == 0.12345

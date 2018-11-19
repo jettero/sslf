@@ -42,6 +42,7 @@ class Daemon(daemonize.Daemonize):
     sourcetype = None
     logger = log
     tz_load_re = '^(GMT|UTC)|^(US|Europe|Asia)/'
+    step_interval = 0.5 # seconds
 
     log_level     = 'info'
     log_file      = '/var/log/sslf.log'
@@ -54,7 +55,7 @@ class Daemon(daemonize.Daemonize):
         'verbose', 'daemonize', 'config_file', 'meta_data_dir',
         'hec','token','index','sourcetype', 'pid_file',
         'log_level', 'log_file', 'log_fmt_cli', 'log_fmt',
-        'tz_load_re',
+        'tz_load_re', 'step_interval',
     )
 
     def __init__(self, *a, **kw):
@@ -240,7 +241,7 @@ class Daemon(daemonize.Daemonize):
     def loop(self):
         while True:
             self.step()
-            time.sleep(0.5) # XXX: loop delay should be configurable (affects disk queueing and the like)
+            time.sleep(self.step_interval)
 
     @property
     def log_level_n(self):
