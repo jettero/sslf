@@ -104,7 +104,12 @@ class Daemon(daemonize.Daemonize):
                 if isinstance(args[k], (str,)):
                     if args[k].lower() in ('false', 'no', '0',): args[k] = False
                     elif args[k].lower() in ('true', 'yes', '1',): args[k] = True
-                setattr(self,k, args[k])
+                nv = args[k]
+                ov = getattr(self, k)
+                if ov is not None:
+                    ga_t = type(ov)
+                    nv = ga_t(nv)
+                setattr(self, k, nv)
             elif with_errors:
                 raise Exception(f'{k} is not a valid config argument')
 
