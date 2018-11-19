@@ -85,6 +85,7 @@ class MySplunkHEC:
         else:
             self.pool_manager = urllib3.PoolManager(**poolmanager_opts)
 
+        self.base_payload = self.base_payload.copy()
         self.base_payload.update(base_payload)
         self.q = get_queue(disk_queue, self.url, self.token)
 
