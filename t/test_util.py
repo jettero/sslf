@@ -9,6 +9,18 @@ def test_attrdict():
     ad.yo = 'supz'
     assert ad.get('yo') == None
 
+def test_attrproxylist():
+    class blah:
+        a = 7
+        b = 8
+    bla = blah()
+    uad = u.AttrDict(c=9, d=10)
+    apl = u.AttrProxyList(bla, uad)
+    assert apl.a ==  7
+    assert apl.b ==  8
+    assert apl.c ==  9
+    assert apl.d == 10
+
 class mylogger:
     def __init__(self,c=None):
         if c is None:

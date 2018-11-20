@@ -1,13 +1,35 @@
 import time, os, re
 import dateutil.parser, dateutil.tz
+import weakref
 
-__all__ = ['DateParser', 'AttrDict', 'RateLimit', 'LogLimit', 'build_tzinfos']
+__all__ = ['DateParser', 'AttrDict', 'AttrProxyList', 'RateLimit', 'LogLimit', 'build_tzinfos']
 
 class AttrDict(dict):
     def __getattribute__(self, name):
         try: return super(AttrDict, self).__getattribute__(name)
         except: pass
         return self.get(name)
+
+class AttrProxyList(object):
+    def __init__(self, *things):
+        self._things = list()
+        self.add_things(*things)
+
+    def add_things(self, *things):
+        self._things.extend([ weakref.ref(i) for i in things ])
+
+    def __iter__(self):
+        for i in self._things:
+            o = i()
+            if o:
+                yield o
+
+    def __getattribute__(self, name):
+        try: return super(AttrProxyList, self).__getattribute__(name)
+        except: pass
+        for i in self:
+            try: return getattr(i, name)
+            except: pass
 
 DEFAULT_RATE_LIMIT = 1
 class RateLimit:
