@@ -11,7 +11,7 @@ import daemonize
 import collections
 
 from sslf.returner import HEC
-from sslf.util import AttrDict, RateLimit, build_tzinfos
+from sslf.util import AttrDict, RateLimit, build_tzinfos, DEFAULT_MEMORY_SIZE, DEFAULT_DISK_SIZE
 
 log = logging.getLogger("sslf")
 
@@ -49,13 +49,20 @@ class Daemon(daemonize.Daemonize):
     log_fmt_cli   = '%(name)s [%(process)d] %(levelname)s: %(message)s'
     log_fmt       = '%(asctime)s ' + log_fmt_cli
 
+    use_certifi = True
+
     _path_config = dict()
+
+    disk_queue = None
+    mem_queue_size = DEFAULT_MEMORY_SIZE
+    disk_queue_size = DEFAULT_DISK_SIZE
 
     _fields = (
         'verbose', 'daemonize', 'config_file', 'meta_data_dir',
         'hec','token','index','sourcetype', 'pid_file',
         'log_level', 'log_file', 'log_fmt_cli', 'log_fmt',
-        'tz_load_re', 'step_interval',
+        'tz_load_re', 'step_interval', 'disk_queue', 'mem_queue_size',
+        'disk_queue_size', 'verify_ssl', 'use_certifi',
     )
 
     def __init__(self, *a, **kw):
@@ -102,13 +109,13 @@ class Daemon(daemonize.Daemonize):
         args = _dictify_args(args)
         for k in args:
             if k in self._fields:
-                if isinstance(args[k], (str,)):
-                    if args[k].lower() in ('false', 'no', '0',): args[k] = False
-                    elif args[k].lower() in ('true', 'yes', '1',): args[k] = True
                 nv = args[k]
                 ov = getattr(self, k)
-                if ov is not None:
-                    ga_t = type(ov)
+                ga_t = None if ov is None else type(ov)
+                if ga_t is bool and isinstance(nv, (str,)):
+                    if nv.lower() in ('false', 'no', '0',): nv = False
+                    elif nv.lower() in ('true', 'yes', '1',): nv = True
+                elif ga_t is not None:
                     nv = ga_t(nv)
                 setattr(self, k, nv)
             elif with_errors:
@@ -175,13 +182,17 @@ class Daemon(daemonize.Daemonize):
             except:
                 sourcetype = 'sslf:' + module.split('.')[-1]
 
+        disk_queue  = pv.get('disk_queue', self.disk_queue)
+        disk_size   = pv.get('disk_queue_size', self.disk_queue_size)
+        mem_size    = pv.get('mem_queue_size', self.mem_queue_size)
+        verify_ssl  = pv.get('verify_ssl', self.verify_ssl)
+        use_certifi = pv.get('use_certifi', self.use_certifi)
+
         pv['hec'] = HEC(
             hec_url, token, sourcetype=sourcetype, index=index,
-            # TODO: surely some people will want to verify this, add option,
-            # default to true
-            verify_ssl=False
+            verify_ssl=verify_ssl, use_certifi=use_certifi,
+            disk_queue=disk_queue, mem_size=mem_size, disk_size=disk_size,
         )
-
 
     def parse_args(self, a):
         parser = argparse.ArgumentParser(description="this is program") # options and program name are automatic
