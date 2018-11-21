@@ -53,7 +53,10 @@ class MySplunkHEC:
     def __init__(self, hec_url, token, verify_ssl=True, use_certifi=False, proxy_url=False,
         redirect_limit=10, retries=2, conn_timeout=3, read_timeout=2, backoff=3,
         disk_queue=None, mem_size=DEFAULT_MEMORY_SIZE, disk_size=DEFAULT_DISK_SIZE,
-        **base_payload):
+        base_payload=None):
+
+        if base_payload is None or not isinstance(base_payload, dict):
+            base_payload = dict()
 
         self.token = token
         self.url   = hec_url
