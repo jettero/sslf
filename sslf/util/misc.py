@@ -1,6 +1,9 @@
 import time, os, re
 import dateutil.parser, dateutil.tz
 import weakref
+import logging
+
+log = logging.getLogger(__name__)
 
 __all__ = ['DateParser', 'AttrDict', 'AttrProxyList', 'RateLimit', 'LogLimit', 'build_tzinfos']
 
@@ -12,17 +15,18 @@ class AttrDict(dict):
 
 class AttrProxyList(object):
     def __init__(self, *things, **kw):
+        self._lambda = dict()
         self._things = list()
         self.add_things(*things)
         self.add_lambda(**kw)
-        self._lambda = dict()
 
     def add_things(self, *things):
         self._things.extend([ weakref.ref(i) for i in things ])
 
     def add_lambda(self, **kw):
         for k,f in kw.items():
-            self._lambda[k] = f
+            if callable(f):
+                self._lambda[k] = f
 
     def compute_lambda(self, name, value):
         if name in self._lambda:
@@ -39,8 +43,9 @@ class AttrProxyList(object):
         try: return super(AttrProxyList, self).__getattribute__(name)
         except AttributeError: pass
         for i in self:
-            try: return self.compute_lambda( name, getattr(i, name) )
-            except AttributeError: pass
+            a = getattr(i, name, None)
+            if a is not None:
+                return self.compute_lambda( name, a )
         return self.compute_lambda(name, None)
 
 DEFAULT_RATE_LIMIT = 1

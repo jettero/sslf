@@ -9,9 +9,11 @@ import time
 import signal
 import daemonize
 import collections
+import re
 
 from sslf.returner import HEC
-from sslf.util import AttrDict, RateLimit, build_tzinfos, DEFAULT_MEMORY_SIZE, DEFAULT_DISK_SIZE
+from sslf.util import (AttrDict, AttrProxyList, RateLimit, build_tzinfos,
+    DEFAULT_MEMORY_SIZE, DEFAULT_DISK_SIZE)
 
 log = logging.getLogger("sslf")
 
@@ -167,31 +169,31 @@ class Daemon(daemonize.Daemonize):
             log.error(f"couldn't find {module} in {clazz}: {e}")
             return
 
-        hec_url = pv.get('hec', self.hec)
-        token = pv.get('token', self.token)
-        index = pv.get('index', self.index or 'tmp')
 
-        if not hec_url or not token or not index:
-            log.warn("couldn't figure out hec settings for path=%s, skipping", path)
+        def sourcetype_filter(x):
+            if x:
+                return x
+            try:
+                return pv['reader'].default_sourcetype
+            except AttributeError:
+                pass
+            return 'sslf:' + module.split('.')[-1]
+
+        apl = AttrProxyList(pv, self,
+            sourcetype=sourcetype_filter,
+            index=lambda x: x or 'tmp',
+            )
+
+        if not apl.hec or not apl.token or not apl.index:
+            logsafe_token = re.sub(r'[^-]','x', apl.token or '') or 'None'
+            log.warn("invalid hec settings path=%s, hec=%s, token=%s, index=%s, skipping",
+                path, apl.hec, logsafe_token, apl.index)
             return
 
-        sourcetype = pv.get('sourcetype', self.sourcetype)
-        if not sourcetype:
-            try:
-                sourcetype = pv['reader'].default_sourcetype
-            except:
-                sourcetype = 'sslf:' + module.split('.')[-1]
-
-        disk_queue  = pv.get('disk_queue', self.disk_queue)
-        disk_size   = pv.get('disk_queue_size', self.disk_queue_size)
-        mem_size    = pv.get('mem_queue_size', self.mem_queue_size)
-        verify_ssl  = pv.get('verify_ssl', self.verify_ssl)
-        use_certifi = pv.get('use_certifi', self.use_certifi)
-
-        pv['hec'] = HEC(
-            hec_url, token, sourcetype=sourcetype, index=index,
-            verify_ssl=verify_ssl, use_certifi=use_certifi,
-            disk_queue=disk_queue, mem_size=mem_size, disk_size=disk_size,
+        pv['hec'] = HEC( apl.hec, apl.token,
+            verify_ssl=apl.verify_ssl, use_certifi=apl.use_certifi,
+            mem_size=apl.mem_queue_size, disk_queue=apl.disk_queue, disk_size=apl.disk_queue_size,
+            base_payload={'sourcetype': apl.sourcetype, 'index': apl.index},
         )
 
     def parse_args(self, a):

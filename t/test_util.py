@@ -9,13 +9,7 @@ def test_attrdict():
     ad.yo = 'supz'
     assert ad.get('yo') == None
 
-def test_attrproxylist():
-    class blah:
-        a = 7
-        b = 8
-    bla = blah()
-    uad = u.AttrDict(c=9, d=10)
-    apl = u.AttrProxyList(bla, uad)
+def _test_attrproxylist(apl):
     assert apl.a ==  7
     assert apl.b ==  8
     assert apl.c ==  9
@@ -39,6 +33,14 @@ def test_attrproxylist():
 
     assert apl.z == 'defaultified'
 
+def test_attrproxy_list_class_attrdict():
+    class blah:
+        a = 7
+        b = 8
+    bla = blah()
+    uad = u.AttrDict(c=9, d=10)
+    _test_attrproxylist( u.AttrProxyList(uad, bla) )
+    _test_attrproxylist( u.AttrProxyList(bla, uad) )
 
 class mylogger:
     def __init__(self,c=None):

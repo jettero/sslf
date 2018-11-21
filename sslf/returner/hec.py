@@ -80,6 +80,7 @@ class MySplunkHEC:
             # confusion regards to why updating the system CA certs doesn't
             # alter the behavior of programs using certifi.
             # </rant>
+            import certifi
             poolmanager_opts['ca_certs'] = certifi.where()
         if verify_ssl:
             poolmanager_opts['cert_reqs'] = 'CERT_REQUIRED'
@@ -100,7 +101,8 @@ class MySplunkHEC:
 
         self.base_payload = self.base_payload.copy()
         self.base_payload.update(base_payload)
-        self.q = get_queue(disk_queue, self.url, self.token)
+        self.q = get_queue(disk_queue, self.url, self.token,
+            mem_size=mem_size, disk_size=disk_size)
 
     def __str__(self):
         return f'HEC({self.url}{self.path})'

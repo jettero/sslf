@@ -40,3 +40,10 @@ def test_config(nc_config):
     jdc = sslf.paths.get('/journald', {})
     assert 're_ts1:SYSLOG_PID' in jdc
     assert sslf.step_interval == 0.12345
+
+    assert jdc.hec.token == 'test2-xx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+    assert jdc.hec.url   == 'https://localhost:12345'
+    assert jdc.hec.q.__class__.__name__ == 'DiskBackedQueue'
+    assert jdc.hec.q.dq.directory == '/tmp/test-q'
+    assert jdc.hec.q.dq.size == 100
+    assert jdc.hec.q.mq.size ==  50
