@@ -81,6 +81,7 @@ class MySplunkHEC:
             # alter the behavior of programs using certifi.
             # </rant>
             import certifi
+            log.warn("using certifi (ignoring /etc/ssl/) for %s", self.url)
             poolmanager_opts['ca_certs'] = certifi.where()
         if verify_ssl:
             poolmanager_opts['cert_reqs'] = 'CERT_REQUIRED'
