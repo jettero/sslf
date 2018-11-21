@@ -21,6 +21,25 @@ def test_attrproxylist():
     assert apl.c ==  9
     assert apl.d == 10
 
+    def plus_one(x):
+        return x + 1
+    apl.add_lambda(c=plus_one)
+
+    assert apl.a ==  7
+    assert apl.b ==  8
+    assert apl.c == 10
+    assert apl.d == 10
+    assert apl.z == None
+
+    def defaultify(x):
+        if x is None:
+            return 'defaultified'
+        return x
+    apl.add_lambda(z=defaultify)
+
+    assert apl.z == 'defaultified'
+
+
 class mylogger:
     def __init__(self,c=None):
         if c is None:

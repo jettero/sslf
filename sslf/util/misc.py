@@ -11,12 +11,23 @@ class AttrDict(dict):
         return self.get(name)
 
 class AttrProxyList(object):
-    def __init__(self, *things):
+    def __init__(self, *things, **kw):
         self._things = list()
         self.add_things(*things)
+        self.add_lambda(**kw)
+        self._lambda = dict()
 
     def add_things(self, *things):
         self._things.extend([ weakref.ref(i) for i in things ])
+
+    def add_lambda(self, **kw):
+        for k,f in kw.items():
+            self._lambda[k] = f
+
+    def compute_lambda(self, name, value):
+        if name in self._lambda:
+            return self._lambda[name]( value )
+        return value
 
     def __iter__(self):
         for i in self._things:
@@ -26,10 +37,11 @@ class AttrProxyList(object):
 
     def __getattribute__(self, name):
         try: return super(AttrProxyList, self).__getattribute__(name)
-        except: pass
+        except AttributeError: pass
         for i in self:
-            try: return getattr(i, name)
-            except: pass
+            try: return self.compute_lambda( name, getattr(i, name) )
+            except AttributeError: pass
+        return self.compute_lambda(name, None)
 
 DEFAULT_RATE_LIMIT = 1
 class RateLimit:
