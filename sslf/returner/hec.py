@@ -211,7 +211,7 @@ class MySplunkHEC:
                 flush_result['s'] += len(payloadz)
                 flush_result['c'] += 1
         if flush_result.c > 0:
-            log.info('sent events to %s, %d bytes, %d batches', self.urlpath, flushresult.s, flushresult.c)
+            log.info('sent events to %s, %d bytes, %d batches', self.urlpath, flush_result.s, flush_result.c)
         return flush_result
 
 HEC = MySplunkHEC
