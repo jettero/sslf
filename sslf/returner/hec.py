@@ -197,7 +197,7 @@ class MySplunkHEC:
                 # this is probably a transient network problem or a transient
                 # splunk problem requeue and abort the flush-q
                 self.q.unget(payloadz)
-                flush_result.ok = False
+                flush_result['ok'] = False
                 log.info('aborting flush() on %s due to network or splunk error', self.urlpath)
                 break
             elif res is False:
@@ -210,7 +210,7 @@ class MySplunkHEC:
             else:
                 flush_result['s'] += len(payloadz)
                 flush_result['c'] += 1
-        if c > 0:
+        if flush_result.c > 0:
             log.info('sent events to %s, %d bytes, %d batches', self.urlpath, flushresult.s, flushresult.c)
         return flush_result
 
