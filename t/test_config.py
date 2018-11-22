@@ -1,3 +1,4 @@
+import os
 import sys
 import logging
 import pytest
@@ -47,3 +48,10 @@ def test_config(nc_config):
     assert jdc.hec.q.dq.directory == '/tmp/test-q'
     assert jdc.hec.q.dq.size == 100
     assert jdc.hec.q.mq.size ==  50
+
+def test_globals():
+    conf = sslf.Daemon._config_reader()
+    conf.read('t/test3.conf')
+    uid = os.getuid()
+    pid = os.getpid()
+    assert conf['test-globals']['test1'] == f'/tmp/{uid}.{pid}.sslf'

@@ -81,7 +81,7 @@ class MySplunkHEC:
             # alter the behavior of programs using certifi.
             # </rant>
             import certifi
-            log.warn("using certifi (ignoring /etc/ssl/) for %s", self.url)
+            log.warning("using certifi (ignoring /etc/ssl/) for %s", self.url)
             poolmanager_opts['ca_certs'] = certifi.where()
         if verify_ssl:
             poolmanager_opts['cert_reqs'] = 'CERT_REQUIRED'
@@ -173,7 +173,7 @@ class MySplunkHEC:
         try:
             self.q.put(encoded_payload)
         except SSLFQueueCapacityError:
-            log.warn("queue overflow during queue_event() … discarding event")
+            log.warning("queue overflow during queue_event() … discarding event")
 
     def flush(self):
         s = 0

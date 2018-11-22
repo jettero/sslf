@@ -186,7 +186,7 @@ class Daemon(daemonize.Daemonize):
 
         if not apl.hec or not apl.token or not apl.index:
             logsafe_token = re.sub(r'[^-]','x', apl.token or '') or 'None'
-            log.warn("invalid hec settings path=%s, hec=%s, token=%s, index=%s, skipping",
+            log.warning("invalid hec settings path=%s, hec=%s, token=%s, index=%s, skipping",
                 path, apl.hec, logsafe_token, apl.index)
             return
 
@@ -209,23 +209,44 @@ class Daemon(daemonize.Daemonize):
         args = parser.parse_args(a) if a else parser.parse_args()
         self._grok_args(args)
 
-    def read_config(self):
-        if not self.config_file:
-            return
-
+    @classmethod
+    def _config_reader(self):
         config = configparser.ConfigParser(
             allow_no_value=True,
             delimiters=('=',),
             inline_comment_prefixes=('#',),
             comment_prefixes=('#',),
+            interpolation=configparser.ExtendedInterpolation(),
         )
+
+        class G:
+            cb = {
+                'pid': os.getpid,
+                'uid': os.getuid,
+                'uid': os.getgid,
+                }
+            def __getitem__(self, name):
+                if name in self.cb:
+                    return self.cb()
+
+            def items(self):
+                for k in self.cb:
+                    yield (k, self.cb[k]())
+        config['G'] = G()
 
         def gigity(x):
             s = x.split(':')
             s[0] = s[0].lower()
             return ':'.join(s)
-
         config.optionxform = gigity
+
+        return config
+
+    def read_config(self):
+        if not self.config_file:
+            return
+
+        config = self._config_reader()
 
         try:
             log.debug("parsing config_file=%s", self.config_file)
@@ -311,7 +332,7 @@ class Daemon(daemonize.Daemonize):
         try:
             with open(self.pid_file, 'r') as fh:
                 pid = int( fh.read().strip() )
-            log.warn('sending SIGTERM to other sslf pid=%d', pid)
+            log.warning('sending SIGTERM to other sslf pid=%d', pid)
             os.kill(pid, signal.SIGTERM)
             time.sleep(0.1)
         except FileNotFoundError: pass

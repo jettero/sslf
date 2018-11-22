@@ -15,6 +15,6 @@ class JSONEventProcessor(ReLineEventProcessor):
         except JSONDecodeError as e:
             if len(str_dat) > 80:
                 str_dat = str_dat[0:79] + '…'
-            log.warn('failed to decode "%s": %s', str_dat, e)
+            log.warning('failed to decode "%s": %s', str_dat, e)
             return
         return self.rlep_line(dat)
