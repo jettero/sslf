@@ -248,3 +248,11 @@ class DiskBackedQueue:
                 r += b' ' + r2
         self._disk_to_mem()
         return r
+
+    @property
+    def cn(self):
+        return self.mq.cn + self.dq.cn
+
+    @property
+    def sz(self):
+        return self.mq.sz + self.dq.sz
