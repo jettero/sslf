@@ -60,6 +60,10 @@ class MemQueue(OKTypesMixin):
             raise SSLFQueueCapacityError('refusing to accept item due to size')
         self.mq.append(item)
 
+    def unget(self, item):
+        self.check_type(item)
+        self.mq.appendleft(item)
+
     def get(self):
         if len(self.mq) > 0:
             return self.mq.popleft()
@@ -216,6 +220,9 @@ class DiskBackedQueue:
         if r is None:
             r = self.dq.peek()
         return r
+
+    def unget(self, msg):
+        self.mq.unget(msg)
 
     def _disk_to_mem(self):
         while self.dq.cn > 0:
