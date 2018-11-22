@@ -1,3 +1,4 @@
+# coding: utf-8
 
 import os, socket, datetime, urllib3, time
 import simplejson as json
@@ -7,7 +8,7 @@ import hashlib
 
 from sslf.util import (
     DiskBackedQueue, MemQueue, SSLFQueueCapacityError,
-    DEFAULT_MEMORY_SIZE, DEFAULT_DISK_SIZE,
+    DEFAULT_MEMORY_SIZE, DEFAULT_DISK_SIZE, AttrDict
 )
 
 log = logging.getLogger('sslf:hec')
@@ -109,6 +110,10 @@ class MySplunkHEC:
         return f'HEC({self.url}{self.path})'
     __repr__ = __str__
 
+    @property
+    def urlpath(self):
+        return self.url + self.path
+
     def _post_message(self, dat):
         headers = urllib3.make_headers( keep_alive=True, user_agent='sslf-hec/3.14', accept_encoding=True)
         headers.update({ 'Authorization': 'Splunk ' + self.token, 'Content-Type': 'application/json' })
@@ -116,7 +121,7 @@ class MySplunkHEC:
         fake_headers['Authorization'] = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx' + headers['Authorization'][-4:]
         log.debug("HEC.pool_manager.request('POST', url=%s + path=%s, body=%s, headers=%s)",
             self.url, self.path, dat, fake_headers)
-        return self.pool_manager.request('POST', self.url + self.path, body=dat, headers=headers)
+        return self.pool_manager.request('POST', self.urlpath, body=dat, headers=headers)
 
     def encode_event(self, event, **payload_data):
         jdargs = payload_data.pop('_jdargs', {})
@@ -152,15 +157,21 @@ class MySplunkHEC:
             log.info('writing encoded_payload(s) to /tmp/sslf-hec-send.log')
             with open('/tmp/sslf-hec-send.log', 'ab') as fh:
                 fh.write(encoded_payload + b'\n')
-        res = self._post_message(encoded_payload)
 
-        # 400 can be ok, further checking required Splunk will sometimes give a
-        # data-format error or similar in the json
+        try:
+            res = self._post_message(encoded_payload)
+        except urllib3.exceptions.MaxRetryError:
+            log.error('failed to connect to %s', self.urlpath)
+            return None # we have nothing at all to say to the caller about this, "didn't work?"
+
         if res.status == 400:
+            # 400 can be ok, further checking required Splunk will sometimes
+            # give a data-format error or similar in the json
             return self._decode_res(res)
 
         if res.status < 200 or res.status > 299:
             log.error(f'HTTP ERROR {res.status}: {res.data}')
+            return False # Splunk was there, but failed to accept the message for some reason
 
         return self._decode_res(res)
 
@@ -176,16 +187,31 @@ class MySplunkHEC:
             log.warning("queue overflow during queue_event() … discarding event")
 
     def flush(self):
-        s = 0
-        c = 0
+        flush_result = AttrDict(s=0, c=0, ok=True)
         while self.q.cn > 0:
             payloadz = self.q.getz()
             if not payloadz:
                 break
-            self._send_event(payloadz)
-            s += len(payloadz)
-            c += 1
+            res = self._send_event(payloadz)
+            if res is None:
+                # this is probably a transient network problem or a transient
+                # splunk problem requeue and abort the flush-q
+                self.q.unget(payloadz)
+                flush_result.ok = False
+                log.info('aborting flush() on %s due to network or splunk error', self.urlpath)
+                break
+            elif res is False:
+                # XXX: this could very well turn out to be an incorrect assumption
+                # ... it seems the 200 - 299 errors indicate a transient accept issue
+                # ... probably a disk is full, or the system is busy or something...
+                self.q.unget(payloadz)
+                flush_result['ok'] = False
+                break
+            else:
+                flush_result['s'] += len(payloadz)
+                flush_result['c'] += 1
         if c > 0:
-            log.info('sent events to %s, %d bytes, %d batches', self.url, s, c)
+            log.info('sent events to %s, %d bytes, %d batches', self.urlpath, flushresult.s, flushresult.c)
+        return flush_result
 
 HEC = MySplunkHEC
