@@ -5,6 +5,7 @@ import simplejson as json
 from urllib3.exceptions import InsecureRequestWarning
 import logging
 import hashlib
+import weakref
 
 from sslf.util import (
     DiskBackedQueue, MemQueue, SSLFQueueCapacityError,
@@ -32,13 +33,20 @@ def get_queue(disk_queue, *a, mem_size=DEFAULT_MEMORY_SIZE, disk_size=DEFAULT_DI
     if disk_queue is not None:
         k = k + (disk_size,)
     if k in _queue_cache:
-        return _queue_cache[k]
+        r = _queue_cache[k]()
+        if r:
+            log.debug('get_queue k=%s; returning cached queue', k)
+            return r
     # XXX: the instanciation of the MQ or DBQ should consider/use options such as:
     # mem_size=blah disk_size=blah
     if disk_queue is None:
-        q = _queue_cache[k] = MemQueue(size=mem_size)
+        log.debug('get_queue k=%s; returning new mem-queue', k)
+        q = MemQueue(size=mem_size)
+        _queue_cache[k] = weakref.ref(q)
     else:
-        q = _queue_cache[k] = DiskBackedQueue(disk_queue, mem_size=mem_size, disk_size=disk_size)
+        log.debug('get_queue k=%s; returning new disk-queue', k)
+        q = DiskBackedQueue(disk_queue, mem_size=mem_size, disk_size=disk_size)
+        _queue_cache[k] = weakref.ref(q)
     return q
 
 
