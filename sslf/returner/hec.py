@@ -41,6 +41,50 @@ def get_queue(disk_queue, *a, mem_size=DEFAULT_MEMORY_SIZE, disk_size=DEFAULT_DI
         q = _queue_cache[k] = DiskBackedQueue(disk_queue, mem_size=mem_size, disk_size=disk_size)
     return q
 
+
+class SendEventResult:
+    OK_NO_PROBLEM      = 0
+    CONNECTION_PROBLEM = 1
+    SERVER_PROBLEM     = 2
+    DATA_PROBLEM       = 4
+
+    code = 0
+    msg  = ''
+    data = None
+
+    def __init__(self, code, data, msg, *a, **kw):
+        self.code = code
+        if msg:
+            log.error(msg, *a, **kw)
+
+    @classmethod
+    def connection_error(cls, msg, *a, **kw):
+        return cls(cls.CONNECTION_PROBLEM, None, msg, *a, **kw)
+
+    @classmethod
+    def server_error(cls, msg, *a, **kw):
+        return cls(cls.SERVER_PROBLEM, None, msg, *a, **kw)
+
+    @classmethod
+    def data_error(cls, msg, *a, **kw):
+        return cls(cls.DATA_PROBLEM, None, msg, *a, **kw)
+
+    @classmethod
+    def data_ok(cls, data):
+        return cls(cls.OK_NO_PROBLEM, data, '')
+
+    @property
+    def istransient(self):
+        return self.code in (self.CONNECTION_PROBLEM, self.SERVER_PROBLEM)
+
+    @property
+    def ok(self):
+        return self.code == self.OK_NO_PROBLEM
+
+    def __bool__(self):
+        return self.ok
+
+
 class MySplunkHEC:
     base_payload = {
         'index':      'main',
@@ -52,7 +96,7 @@ class MySplunkHEC:
     path = "/services/collector/event"
 
     def __init__(self, hec_url, token, verify_ssl=True, use_certifi=False, proxy_url=False,
-        redirect_limit=10, retries=2, conn_timeout=3, read_timeout=2, backoff=3,
+        redirect_limit=10, retries=1, conn_timeout=2, read_timeout=2, backoff=3,
         disk_queue=None, mem_size=DEFAULT_MEMORY_SIZE, disk_size=DEFAULT_DISK_SIZE,
         base_payload=None):
 
@@ -118,9 +162,10 @@ class MySplunkHEC:
         headers = urllib3.make_headers( keep_alive=True, user_agent='sslf-hec/3.14', accept_encoding=True)
         headers.update({ 'Authorization': 'Splunk ' + self.token, 'Content-Type': 'application/json' })
         fake_headers = headers.copy()
+        fake_data = dat[0:100] + '…'.encode('utf-8') if len(dat) > 100 else dat
         fake_headers['Authorization'] = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx' + headers['Authorization'][-4:]
         log.debug("HEC.pool_manager.request('POST', url=%s + path=%s, body=%s, headers=%s)",
-            self.url, self.path, dat, fake_headers)
+            self.url, self.path, fake_data, fake_headers)
         return self.pool_manager.request('POST', self.urlpath, body=dat, headers=headers)
 
     def encode_event(self, event, **payload_data):
@@ -153,6 +198,7 @@ class MySplunkHEC:
             log.error('Unable to decode reply from Splunk HEC: %s', e)
 
     def _send_event(self, encoded_payload):
+
         if os.environ.get('SSLF_DEBUG_HEC_SEND_LOG'):
             log.info('writing encoded_payload(s) to /tmp/sslf-hec-send.log')
             with open('/tmp/sslf-hec-send.log', 'ab') as fh:
@@ -161,19 +207,24 @@ class MySplunkHEC:
         try:
             res = self._post_message(encoded_payload)
         except urllib3.exceptions.MaxRetryError:
-            log.error('failed to connect to %s', self.urlpath)
-            return None # we have nothing at all to say to the caller about this, "didn't work?"
+            return SendEventResult.connection_error('max retry error connecting to %s', self.urlpath)
+        except urllib3.exceptions.ReadTimeoutError:
+            return SendEventResult.connection_error('read timeout error connecting to %s', self.urlpath)
 
         if res.status == 400:
             # 400 can be ok, further checking required Splunk will sometimes
             # give a data-format error or similar in the json
-            return self._decode_res(res)
+            #
+            # XXX: we assume it's fine here, but we should probably check for
+            # data format errors here (we're not checking anywhere else). OTOH,
+            # it probably doesn't matter very much — splunk didn't accept it
+            # and we're not going to re-queue it anyway.
+            return SendEventResult.data_ok(self._decode_res(res))
 
         if res.status < 200 or res.status > 299:
-            log.error(f'HTTP ERROR {res.status}: {res.data}')
-            return False # Splunk was there, but failed to accept the message for some reason
+            return SendEventResult.server_error('HTTP ERROR %d: %s', res.status, res.data)
 
-        return self._decode_res(res)
+        return SendEventResult.data_ok(self._decode_res(res))
 
     def send_event(self, event, **payload_data):
         encoded_payload = self.encode_event(event, **payload_data)
@@ -193,23 +244,25 @@ class MySplunkHEC:
             if not payloadz:
                 break
             res = self._send_event(payloadz)
-            if res is None:
+            if res.ok:
+                flush_result['s'] += len(payloadz)
+                flush_result['c'] += 1
+            elif res.istransient:
                 # this is probably a transient network problem or a transient
-                # splunk problem requeue and abort the flush-q
+                # splunk problem; requeue and abort the flush-q
                 self.q.unget(payloadz)
                 flush_result['ok'] = False
                 log.info('aborting flush() on %s due to network or splunk error', self.urlpath)
                 break
-            elif res is False:
+            else:
                 # XXX: this could very well turn out to be an incorrect assumption
-                # ... it seems the 200 - 299 errors indicate a transient accept issue
-                # ... probably a disk is full, or the system is busy or something...
+                # We assume:
+                #   the 200 - 299 errors indicate a transient accept issue —
+                #   probably a disk is full, or the system is busy or
+                #   something?
                 self.q.unget(payloadz)
                 flush_result['ok'] = False
                 break
-            else:
-                flush_result['s'] += len(payloadz)
-                flush_result['c'] += 1
         if flush_result.c > 0:
             log.info('sent events to %s, %d bytes, %d batches', self.urlpath, flush_result.s, flush_result.c)
         return flush_result

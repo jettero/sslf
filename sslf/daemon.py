@@ -264,16 +264,21 @@ class Daemon(daemonize.Daemonize):
         log.debug('------------------------------ STEP ------------------------------')
         for pv in self.paths.values():
             rb = pv['retry_backoff']
+            # rb.n is the number of steps we should skip flush for this queue
+            # rb.c is the number of steps we actually skipped the flush for this queue
             if rb.c < rb.n:
                 rb['c'] += 1
                 log.debug("%s is still in backoff (%s)", pv.hec.urlpath, rb)
                 continue
+
             if pv.hec.flush().ok:
                 rb['n'] = rb['c'] = 0
+
             else:
                 rb['n'] = rb.n * 2 if rb.n > 0 else 2
                 rb['c'] = 0
                 log.debug("increase backoff for %s (%s)", pv.hec.urlpath, rb)
+
         for pv in self.paths.values():
             if pv.reader.ready:
                 log.debug("%s says its ready, reading", pv.reader)
