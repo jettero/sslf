@@ -271,18 +271,18 @@ class Daemon(daemonize.Daemonize):
             # rb.c is the number of steps we actually skipped the flush for this queue
             if rb.c < rb.n:
                 rb['c'] += 1
-                log.debug("%s is in backoff (%s)", pv.hec.urlpath, rb)
+                log.debug("%s is in backoff (%s)", pv.hec.url, rb)
                 continue
 
             if pv.hec.flush().ok:
                 if rb.n > 0:
-                    log.info("flush ok, canceling backoff for %s", pv.hec.urlpath)
+                    log.info("flush ok, canceling backoff for %s", pv.hec.url)
                 rb['n'] = rb['c'] = 0
 
             else:
                 rb['n'] = rb.n * 2 if rb.n > 0 else 2
                 rb['c'] = 0
-                log.info("setting %s to backoff (skip_steps: %s)", pv.hec.urlpath, rb.n)
+                log.info("setting %s to backoff (skip_steps: %s)", pv.hec.url, rb.n)
 
         for pv in self.paths.values():
             if pv.reader.ready:

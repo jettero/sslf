@@ -207,9 +207,9 @@ class MySplunkHEC:
         try:
             res = self._post_message(encoded_payload)
         except urllib3.exceptions.MaxRetryError:
-            return SendEventResult.connection_error('max retry error connecting to %s', self.urlpath)
+            return SendEventResult.connection_error('max retry error connecting to %s', self.url)
         except urllib3.exceptions.ReadTimeoutError:
-            return SendEventResult.connection_error('read timeout error connecting to %s', self.urlpath)
+            return SendEventResult.connection_error('read timeout error connecting to %s', self.url)
 
         if res.status == 400:
             # 400 can be ok, further checking required Splunk will sometimes
@@ -252,7 +252,7 @@ class MySplunkHEC:
                 # splunk problem; requeue and abort the flush-q
                 self.q.unget(payloadz)
                 flush_result['ok'] = False
-                log.info('aborting flush() on %s due to network or splunk error', self.urlpath)
+                log.info('aborting flush() on %s due to network or splunk error', self.url)
                 break
             else:
                 # XXX: this could very well turn out to be an incorrect assumption
@@ -264,7 +264,7 @@ class MySplunkHEC:
                 flush_result['ok'] = False
                 break
         if flush_result.c > 0:
-            log.info('sent events to %s, %d bytes, %d batches', self.urlpath, flush_result.s, flush_result.c)
+            log.info('sent events to %s, %d bytes, %d batches', self.url, flush_result.s, flush_result.c)
         return flush_result
 
 HEC = MySplunkHEC
