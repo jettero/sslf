@@ -265,7 +265,12 @@ class Daemon(daemonize.Daemonize):
 
     def step(self):
         log.debug('------------------------------ STEP ------------------------------')
+
+        done = set()
         for pv in self.paths.values():
+            if pv.hec.q in done:
+                continue
+            done.add(pv.hec.q)
             rb = pv['retry_backoff']
             # rb.n is the number of steps we should skip flush for this queue
             # rb.c is the number of steps we actually skipped the flush for this queue
