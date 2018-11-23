@@ -149,7 +149,10 @@ class Daemon(daemonize.Daemonize):
         if not pv:
             pv = self.paths[path] = AttrDict()
         pv.update(args)
-        pv['retry_backoff'] = AttrDict(n=0, c=0)
+        class RetryBackoff(AttrDict):
+            def __str__(self):
+                return f'skip_steps={self.n} step_count={self.c}'
+        pv['retry_backoff'] = RetryBackoff(n=0, c=0)
 
         if not pv.get('meta_data_dir'):
             pv['meta_data_dir'] = self.meta_data_dir
@@ -268,16 +271,18 @@ class Daemon(daemonize.Daemonize):
             # rb.c is the number of steps we actually skipped the flush for this queue
             if rb.c < rb.n:
                 rb['c'] += 1
-                log.debug("%s is still in backoff (%s)", pv.hec.urlpath, rb)
+                log.debug("%s is in backoff (%s)", pv.hec.urlpath, rb)
                 continue
 
             if pv.hec.flush().ok:
+                if rb.n > 0:
+                    log.info("flush ok, canceling backoff for %s", pv.hec.urlpath)
                 rb['n'] = rb['c'] = 0
 
             else:
                 rb['n'] = rb.n * 2 if rb.n > 0 else 2
                 rb['c'] = 0
-                log.debug("increase backoff for %s (%s)", pv.hec.urlpath, rb)
+                log.info("setting %s to backoff (skip_steps: %s)", pv.hec.urlpath, rb.n)
 
         for pv in self.paths.values():
             if pv.reader.ready:
