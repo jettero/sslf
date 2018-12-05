@@ -144,6 +144,7 @@ class DiskQueue(OKTypesMixin):
         d = self._mkdir(fanout)
         f = os.path.join(d, remainder)
         with open(f, 'wb') as fh:
+            log.debug('writing item to disk cache')
             fh.write(item)
         self._count()
 
@@ -194,6 +195,7 @@ class DiskQueue(OKTypesMixin):
         for fname in self.files:
             self.sz += os.stat(fname).st_size
             self.cn += 1
+        log.debug('disk cache sizes: cn=%d sz=%d', self.cn, self.sz)
 
     @property
     def msz(self):
