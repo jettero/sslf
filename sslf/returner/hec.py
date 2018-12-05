@@ -34,9 +34,11 @@ def get_queue(disk_queue, *a, mem_size=DEFAULT_MEMORY_SIZE, disk_size=DEFAULT_DI
         k = k + (disk_size,)
     if k in _queue_cache:
         r = _queue_cache[k]()
-        if r:
+        if r is not None:
             log.debug('get_queue k=%s; returning cached queue', k)
             return r
+        else:
+            log.debug('get_queue k=%s; key in cache, but weakref resolves to None')
     # XXX: the instanciation of the MQ or DBQ should consider/use options such as:
     # mem_size=blah disk_size=blah
     if disk_queue is None:

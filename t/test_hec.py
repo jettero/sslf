@@ -52,6 +52,6 @@ def test_combine():
     h1 = HEC('https://whatever', 'secret-token')
     h2 = HEC('https://revetahw', 'secret-token')
     h3 = HEC('https://whatever', 'secret-token')
+    assert h1.q is     h3.q
     assert h1.q is not h2.q
     assert h2.q is not h3.q
-    assert h1.q is     h3.q
