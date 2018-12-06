@@ -183,9 +183,19 @@ class Daemon(daemonize.Daemonize):
                 pass
             return 'sslf:' + module.split('.')[-1]
 
+        def disk_queue_fix(x):
+            if x is None or not x.strip():
+                return
+            if x == self.meta_data_dir:
+                return os.path.join(self.meta_data_dir, 'dq')
+            if x.startswith('/'):
+                return x
+            return os.path.join(self.meta_data_dir, x)
+
         apl = AttrProxyList(pv, self,
             sourcetype=sourcetype_filter,
             index=lambda x: x or 'tmp',
+            disk_queue=disk_queue_fix,
             )
 
         if not apl.hec or not apl.token or not apl.index:
