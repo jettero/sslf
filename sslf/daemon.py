@@ -45,6 +45,7 @@ class Daemon(daemonize.Daemonize):
     logger = log
     tz_load_re = '^(GMT|UTC)|^(US|Europe|Asia)/'
     step_interval = 0.5 # seconds
+    step_msg_limit = 50
 
     log_level     = 'info'
     log_file      = '/var/log/sslf.log'
@@ -63,8 +64,8 @@ class Daemon(daemonize.Daemonize):
         'verbose', 'daemonize', 'config_file', 'meta_data_dir',
         'hec','token','index','sourcetype', 'pid_file',
         'log_level', 'log_file', 'log_fmt_cli', 'log_fmt',
-        'tz_load_re', 'step_interval', 'disk_queue', 'mem_queue_size',
-        'disk_queue_size', 'verify_ssl', 'use_certifi',
+        'tz_load_re', 'step_msg_limit', 'step_interval', 'disk_queue',
+        'mem_queue_size', 'disk_queue_size', 'verify_ssl', 'use_certifi',
     )
 
     def __init__(self, *a, **kw):
@@ -276,11 +277,22 @@ class Daemon(daemonize.Daemonize):
     def step(self):
         log.debug('------------------------------ STEP ------------------------------')
 
+        if isinstance(self.step_msg_limit, int) and self.step_msg_limit > 0:
+            sml = self.step_msg_limit
+        else:
+            sml = None
+
         done = set()
         for pv in self.paths.values():
+            if pv.hec.q.cn < 1:
+                continue
+
             if pv.hec.q in done:
                 continue
             done.add(pv.hec.q)
+
+            log.debug('%s %s has events to flush, flushing', pv.reader, pv.hec)
+
             rb = pv['retry_backoff']
             # rb.n is the number of steps we should skip flush for this queue
             # rb.c is the number of steps we actually skipped the flush for this queue
@@ -308,6 +320,12 @@ class Daemon(daemonize.Daemonize):
                         pv.hec.queue_event(evr)
                     except Exception as e:
                         log.error("error queueing event for %s: %s", pv.hec, e)
+                    if isinstance(sml, int):
+                        sml -= 1
+                        if sml < 1:
+                            log.error("send_msg_limit = %d < 1; aborting step early", sml)
+                            return
+                        log.error("send_msg_limit = %d", sml)
 
     def loop(self):
         while True:
