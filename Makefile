@@ -31,4 +31,12 @@ help:
 %:
 	$(S) $@
 
-.PHONY: sc super-clean default # mark phony targets so we don't also fire $(S) $@
+.PHONY: crt sc super-clean default # mark phony targets so we don't also fire $(S) $@
+
+# used for testing
+crt: # clean-run-test for installed sslf user
+	find sslf -print0 | xargs -r0 chmod -c o=g
+	sudo chown -c :sslf /etc/sslf.conf && sudo chmod -c g+r /etc/sslf.conf
+	sudo systemctl stop sslf
+	sudo find /var/cache/sslf -mindepth 1 -print0 | sudo xargs -r0 rm -rvf
+	sudo -u sslf ./lrunner -vl debug
