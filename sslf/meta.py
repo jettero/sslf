@@ -18,7 +18,7 @@ class MetaData:
         os.makedirs(self.meta_data_dir, exist_ok=True)
         with open(self.meta_fname, 'w') as fh:
             json.dump(self.serialize(), fh)
-            log.debug("saved %s to %s", self, self.meta_fname)
+            log.debug("saved %s to %s", self, repr(self.meta_fname))
 
     def load(self):
         fname = self.meta_fname
@@ -29,4 +29,5 @@ class MetaData:
                 except json.decoder.JSONDecodeError as e:
                     log.error("failed to load %s: %s", self.meta_fname, e)
                     return
+            log.debug('loaded data from %s', self.meta_fname)
             self.deserialize(dat)
