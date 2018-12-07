@@ -19,6 +19,12 @@ class JSONReturner(HEC):
             self.file = self.file[7:]
         if not self.file.startswith('/'):
             self.file = '/tmp/' + self.file
+        try: self.q.sep = b'\n'
+        except AttributeError: pass
+        try: self.q.mq.sep = b'\n'
+        except AttributeError: pass
+        try: self.q.dq.sep = b'\n'
+        except AttributeError: pass
 
     def _send_event(self, encoded_payload):
         with open(self.file, 'ab') as fh:
