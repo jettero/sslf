@@ -14,14 +14,13 @@ def mod_cls_split(x, namespace, classname):
         return f'{namespace}.{x[0]}', x[1]
     return x[0], x[1]
 
-def find_namespaced_object(x, namespace, classname, *a, **kw):
+def find_namespaced_class(x, namespace, classname):
     module, clazz = mod_cls_split(x, namespace, classname)
 
     try:
         m = importlib.import_module(module)
         c = getattr(m, clazz)
-        o = c(*a, **kw)
-        return o
+        return c
     except ModuleNotFoundError as e:
         raise Exception(f"couldn't find x={x} as {module}.{clazz}()") from e
 
