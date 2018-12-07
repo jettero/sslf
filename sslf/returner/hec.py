@@ -278,3 +278,4 @@ class MySplunkHEC:
         return flush_result
 
 HEC = MySplunkHEC
+Returner = MySplunkHEC
