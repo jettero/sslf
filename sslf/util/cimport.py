@@ -1,6 +1,6 @@
 import importlib
 
-def mod_cls_split(x, classname='Reader', namespace='sslf.reader'):
+def mod_cls_split(x, namespace, classname):
     x = x.rsplit('.',1)
     if len(x) == 1:
         # reader = lines / aka x[0]
@@ -14,19 +14,13 @@ def mod_cls_split(x, classname='Reader', namespace='sslf.reader'):
         return f'{namespace}.{x[0]}', x[1]
     return x[0], x[1]
 
-def find_namespaced_object(x, classname='Reader', namespace='sslf.reader', oargs=None, okwargs=None):
-    module, clazz = mod_cls_split(x, classname=classname, namespace=namespace)
-
-    if oargs is None:
-        oargs = tuple()
-
-    if okwargs is None:
-        okwargs = dict()
+def find_namespaced_object(x, namespace, classname, *a, **kw):
+    module, clazz = mod_cls_split(x, namespace, classname)
 
     try:
         m = importlib.import_module(module)
         c = getattr(m, clazz)
-        o = c(*oargs, **okwargs)
+        o = c(*a, **kw)
         return o
     except ModuleNotFoundError as e:
         raise Exception(f"couldn't find x={x} as {module}.{clazz}()") from e
