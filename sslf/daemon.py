@@ -171,7 +171,7 @@ class Daemon(daemonize.Daemonize):
             log.info("added %s to watchlist using %s", path, o)
         except ModuleNotFoundError as e:
             self.paths.pop(path, None)
-            log.error(f"couldn't find {module} in {clazz}: {e}")
+            log.error(f"couldn't find {clazz} in {module}: {e}")
             return
 
 
