@@ -117,7 +117,9 @@ class Daemon(daemonize.Daemonize):
                 nv = args[k]
                 ov = getattr(self, k)
                 ga_t = None if ov is None else type(ov)
-                if ga_t is bool and isinstance(nv, (str,)):
+                if k == 'returner':
+                    nv = find_namespaced_class(nv, 'sslf.returner', 'Returner')
+                elif ga_t is bool and isinstance(nv, (str,)):
                     if nv.lower() in ('false', 'no', '0',): nv = False
                     elif nv.lower() in ('true', 'yes', '1',): nv = True
                 elif ga_t is not None:
@@ -229,6 +231,8 @@ class Daemon(daemonize.Daemonize):
                 'pid': os.getpid,
                 'uid': os.getuid,
                 'uid': os.getgid,
+                'cwd': os.getcwd,
+                'pwd': os.getcwd,
                 }
             def __getitem__(self, name):
                 if name in self.cb:
