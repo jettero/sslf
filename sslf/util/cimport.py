@@ -1,4 +1,7 @@
 import importlib
+import logging
+
+log = logging.getLogger('sslf:util:cimport')
 
 def mod_cls_split(x, namespace, classname):
     x = x.rsplit('.',1)
