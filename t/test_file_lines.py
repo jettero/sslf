@@ -26,5 +26,5 @@ def test_reader(tfile, file_lines, mdir):
     assert [ x.event for x in file_lines.read() ] == ['yolo\n']
 
 def test_sig(tfile, file_lines, mdir):
-    tfile.truncate(0)
+    tfile.my_trunc()
     assert file_lines.gen_sig() == 'd41d8cd98f00b204e9800998ecf8427e'
