@@ -57,3 +57,10 @@ def nc_config():# no-[default]-config config()
     yield _s
     sslf.Daemon.config_file = orig
 
+
+@pytest.fixture
+def mainloop_config():
+    with open('t/_mainloop.conf', 'r') as infh:
+        with open('t/mainloop.conf', 'w') as outfh:
+            for line in infh.readlines():
+                outfh.write(line.replace('<PWD>', os.getcwd()))
