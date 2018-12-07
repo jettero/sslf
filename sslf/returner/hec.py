@@ -12,7 +12,7 @@ from sslf.util import (
     DEFAULT_MEMORY_SIZE, DEFAULT_DISK_SIZE, AttrDict
 )
 
-log = logging.getLogger('sslf:hec')
+log = logging.getLogger('sslf:returner:hec')
 
 HOSTNAME = socket.gethostname()
 

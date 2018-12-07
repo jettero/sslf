@@ -1,6 +1,5 @@
 # coding: UTF-8
 
-import importlib
 import argparse
 import configparser
 import os, sys
@@ -13,7 +12,7 @@ import re
 
 from sslf.returner import HEC
 from sslf.util import (AttrDict, AttrProxyList, RateLimit, build_tzinfos,
-    DEFAULT_MEMORY_SIZE, DEFAULT_DISK_SIZE)
+    DEFAULT_MEMORY_SIZE, DEFAULT_DISK_SIZE, find_namespaced_class)
 
 log = logging.getLogger("sslf")
 
@@ -60,12 +59,15 @@ class Daemon(daemonize.Daemonize):
     mem_queue_size = DEFAULT_MEMORY_SIZE
     disk_queue_size = DEFAULT_DISK_SIZE
 
+    returner = HEC
+
     _fields = (
         'verbose', 'daemonize', 'config_file', 'meta_data_dir',
         'hec','token','index','sourcetype', 'pid_file',
         'log_level', 'log_file', 'log_fmt_cli', 'log_fmt',
         'tz_load_re', 'step_msg_limit', 'step_interval', 'disk_queue',
         'mem_queue_size', 'disk_queue_size', 'verify_ssl', 'use_certifi',
+        'returner',
     )
 
     def __init__(self, *a, **kw):
@@ -158,22 +160,10 @@ class Daemon(daemonize.Daemonize):
         if not pv.get('meta_data_dir'):
             pv['meta_data_dir'] = self.meta_data_dir
 
-        module = pv.pop('reader', 'lines')
-        clazz  = pv.pop('class', 'Reader')
-        if '.' not in module:
-            module = 'sslf.reader.' + module
-
-        try:
-            m = importlib.import_module(module)
-            c = getattr(m, clazz)
-            o = c(path, config=pv)
-            pv['reader'] = o
-            log.info("added %s to watchlist using %s", path, o)
-        except ModuleNotFoundError as e:
-            self.paths.pop(path, None)
-            log.error(f"couldn't find {clazz} in {module}: {e}")
-            return
-
+        pv['reader'] = find_namespaced_class(pv.pop('reader','lines'),
+            'sslf.reader', 'Reader')(path, config=pv)
+        if 'returner' in pv:
+            pv['returner'] = find_namespaced_class(pv['returner'], 'sslf.returner', 'Returner')
 
         def sourcetype_filter(x):
             if x:
@@ -205,7 +195,7 @@ class Daemon(daemonize.Daemonize):
                 path, apl.hec, logsafe_token, apl.index)
             return
 
-        pv['hec'] = HEC( apl.hec, apl.token,
+        pv['hec'] = apl.returner( apl.hec, apl.token,
             verify_ssl=apl.verify_ssl, use_certifi=apl.use_certifi,
             mem_size=apl.mem_queue_size, disk_queue=apl.disk_queue, disk_size=apl.disk_queue_size,
             base_payload={'sourcetype': apl.sourcetype, 'index': apl.index},

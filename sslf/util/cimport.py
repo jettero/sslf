@@ -22,6 +22,6 @@ def find_namespaced_class(x, namespace, classname):
         c = getattr(m, clazz)
         return c
     except ModuleNotFoundError as e:
-        raise Exception(f"couldn't find x={x} as {module}.{clazz}()") from e
+        raise Exception(f"couldn't find x={x} as {module}.{clazz}") from e
 
 
