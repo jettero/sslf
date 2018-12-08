@@ -6,4 +6,4 @@ __pycache__
 file
 dist
 build
-mainloop.conf
+jsonloop.conf

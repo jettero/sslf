@@ -59,8 +59,8 @@ def nc_config():# no-[default]-config config()
 
 
 @pytest.fixture
-def mainloop_config():
-    with open('t/_mainloop.conf', 'r') as infh:
-        with open('t/mainloop.conf', 'w') as outfh:
+def jsonloop_config():
+    with open('t/_jsonloop.conf', 'r') as infh:
+        with open('t/jsonloop.conf', 'w') as outfh:
             for line in infh.readlines():
                 outfh.write(line.replace('<PWD>', os.getcwd()))
