@@ -59,8 +59,18 @@ def nc_config():# no-[default]-config config()
 
 
 @pytest.fixture
-def jsonloop_config():
+def jsonloop_config(request):
     with open('t/_jsonloop.conf', 'r') as infh:
         with open('t/jsonloop.conf', 'w') as outfh:
             for line in infh.readlines():
                 outfh.write(line.replace('<PWD>', os.getcwd()))
+    def fin():
+        if _e('NO_FIN') and _e('NO_JSONLOOP_FIN'):
+            os.unlink('t/jsonloop.conf')
+    request.addfinalizer(fin)
+    return 't/jsonloop.conf'
+
+@pytest.fixture
+def jsonloop_daemon(jsonloop_config, mdir):
+    import sslf.daemon
+    return sslf.daemon.Daemon('--config-file', jsonloop_config)
