@@ -317,7 +317,7 @@ class Daemon(daemonize.Daemonize):
                     if isinstance(sml, int):
                         sml -= 1
                         if sml < 1:
-                            log.info("step_msg_limit=%d reached; aborting_step early", self.step_msg_limit)
+                            log.info("step_msg_limit=%d reached; aborting daemon.step() early", self.step_msg_limit)
                             return
                         log.debug("step_msg_limit = %d", sml)
 

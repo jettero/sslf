@@ -16,6 +16,9 @@ log = logging.getLogger('sslf:returner:hec')
 
 HOSTNAME = socket.gethostname()
 
+class EmptyEvent(Exception):
+    pass
+
 class MyJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, (datetime.datetime,datetime.date)):
@@ -189,7 +192,7 @@ class MySplunkHEC:
         if isinstance(event, str):
             event = event.strip()
         if not event:
-            raise Exception('event must not be empty')
+            raise EmptyEvent('event must not be empty')
         dat['event'] = event
         if 'time' not in dat:
             _e = event if isinstance(event, dict) else dict()
@@ -241,11 +244,17 @@ class MySplunkHEC:
         return SendEventResult.data_ok(self._decode_res(res))
 
     def send_event(self, event, **payload_data):
-        encoded_payload = self.encode_event(event, **payload_data)
+        try:
+            encoded_payload = self.encode_event(event, **payload_data)
+        except EmptyEvent:
+            return # silently discard empty events
         return self._send_event(encoded_payload)
 
     def queue_event(self, event, **payload_data):
-        encoded_payload = self.encode_event(event, **payload_data)
+        try:
+            encoded_payload = self.encode_event(event, **payload_data)
+        except EmptyEvent:
+            return # silently discard empty events
         try:
             self.q.put(encoded_payload)
         except SSLFQueueCapacityError:
