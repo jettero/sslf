@@ -251,14 +251,16 @@ class MySplunkHEC:
     def send_event(self, event, **payload_data):
         try:
             encoded_payload = self.encode_event(event, **payload_data)
-        except FilteredEvent:
+        except FilteredEvent as e:
+            log.debug('filtering event: %s', e)
             return # silently discard empty events
         return self._send_event(encoded_payload)
 
     def queue_event(self, event, **payload_data):
         try:
             encoded_payload = self.encode_event(event, **payload_data)
-        except FilteredEvent:
+        except FilteredEvent as e:
+            log.debug('filtering event: %s', e)
             return # silently discard empty events
         try:
             self.q.put(encoded_payload)
