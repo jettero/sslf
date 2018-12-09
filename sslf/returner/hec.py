@@ -16,7 +16,7 @@ log = logging.getLogger('sslf:returner:hec')
 
 HOSTNAME = socket.gethostname()
 
-class EmptyEvent(Exception):
+class FilteredEvent(Exception):
     pass
 
 class MyJSONEncoder(json.JSONEncoder):
@@ -111,7 +111,7 @@ class MySplunkHEC:
     def __init__(self, hec_url, token, verify_ssl=True, use_certifi=False, proxy_url=False,
         redirect_limit=10, retries=1, conn_timeout=2, read_timeout=2, backoff=3,
         disk_queue=None, mem_size=DEFAULT_MEMORY_SIZE, disk_size=DEFAULT_DISK_SIZE,
-        base_payload=None):
+        base_payload=None, record_age_filter=27000000):
 
         if base_payload is None or not isinstance(base_payload, dict):
             base_payload = dict()
@@ -192,13 +192,18 @@ class MySplunkHEC:
         if isinstance(event, str):
             event = event.strip()
         if not event:
-            raise EmptyEvent('event must not be empty')
+            raise FilteredEvent('event must not be empty')
         dat['event'] = event
+        _now = datetime.datetime.now()
         if 'time' not in dat:
             _e = event if isinstance(event, dict) else dict()
             dat['time'] = dat.get('fields', {}).get('time', _e.get('time'))
             if not dat.get('time'):
-                dat['time'] = datetime.datetime.now()
+                dat['time'] = _now
+        if self.record_age_filter and self.record_age_filter > 0:
+            age = _now - dat['time']
+            if age > self.record_age_filter:
+                raise FilteredEvent('event is too old to bother with')
         return json.dumps(dat, cls=MyJSONEncoder, **jdargs).encode(self.charset)
     encode_payload = encode_event
 
@@ -246,14 +251,14 @@ class MySplunkHEC:
     def send_event(self, event, **payload_data):
         try:
             encoded_payload = self.encode_event(event, **payload_data)
-        except EmptyEvent:
+        except FilteredEvent:
             return # silently discard empty events
         return self._send_event(encoded_payload)
 
     def queue_event(self, event, **payload_data):
         try:
             encoded_payload = self.encode_event(event, **payload_data)
-        except EmptyEvent:
+        except FilteredEvent:
             return # silently discard empty events
         try:
             self.q.put(encoded_payload)

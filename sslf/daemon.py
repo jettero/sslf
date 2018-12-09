@@ -45,6 +45,7 @@ class Daemon(daemonize.Daemonize):
     tz_load_re = '^(GMT|UTC)|^(US|Europe|Asia)/'
     step_interval = 0.5 # seconds
     step_msg_limit = 1000
+    record_age_filter = 27000000 # 27 ksec is roughly a month
 
     log_level     = 'info'
     log_file      = '/var/log/sslf.log'
@@ -67,7 +68,7 @@ class Daemon(daemonize.Daemonize):
         'log_level', 'log_file', 'log_fmt_cli', 'log_fmt',
         'tz_load_re', 'step_msg_limit', 'step_interval', 'disk_queue',
         'mem_queue_size', 'disk_queue_size', 'verify_ssl', 'use_certifi',
-        'returner',
+        'returner', 'record_age_filter'
     )
 
     def __init__(self, *a, **kw):
