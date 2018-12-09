@@ -317,9 +317,9 @@ class Daemon(daemonize.Daemonize):
                     if isinstance(sml, int):
                         sml -= 1
                         if sml < 1:
-                            log.error("send_msg_limit = %d < 1; aborting step early", sml)
+                            log.debug("send_msg_limit = %d < 1; aborting step early", sml)
                             return
-                        log.error("send_msg_limit = %d", sml)
+                        log.debug("send_msg_limit = %d", sml)
 
     def loop(self):
         while True:
