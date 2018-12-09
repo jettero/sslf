@@ -2,6 +2,8 @@
 
 import pytest
 import os, shutil
+import importlib
+import sslf.daemon
 
 def _e(var):
     if var in os.environ:
@@ -13,8 +15,9 @@ def _e(var):
 @pytest.fixture
 def tfile(request):
     def fin():
-        if _e('NO_FIN') and _e('NO_FILE_FIN'):
+        if _e('NO_FIN') and _e('NO_FILE_FIN') and os.path.isfile('t/file'):
             os.unlink('t/file')
+    fin()
     request.addfinalizer(fin)
     fh = open('t/file', 'w')
     def my_print(self,f,*a,**kw):
@@ -44,18 +47,16 @@ def mdir(request):
 
 @pytest.fixture
 def nc_config():# no-[default]-config config()
-    import sslf
-    orig = sslf.Daemon.config_file
-    sslf.Daemon.config_file = ''
+    sslf.daemon.Daemon.config_file = ''
     def _s(*a, **kw):
         # in test_something(nc_config), nc_config is this lambda
         # so nc_config('-c', 'whatever.conf')
         # or nc_config(config_file='blah')
         # or nc_config(config='broken') # should be config={…)
         # is handed to Daemon().update_path_config() here:
-        return sslf.Daemon(*a, **kw).update_path_config()
+        return sslf.daemon.Daemon(*a, **kw).update_path_config()
     yield _s
-    sslf.Daemon.config_file = orig
+    importlib.reload(sslf.daemon)
 
 
 @pytest.fixture
@@ -72,5 +73,11 @@ def jsonloop_config(request):
 
 @pytest.fixture
 def jsonloop_daemon(jsonloop_config, mdir):
-    import sslf.daemon
-    return sslf.daemon.Daemon('--config-file', jsonloop_config)
+    yield sslf.daemon.Daemon('--config-file', jsonloop_config)
+    importlib.reload(sslf.daemon)
+
+@pytest.fixture
+def thousand_line_tfile(tfile):
+    for i in range(0,1000):
+        tfile.my_print(f'line-{i}')
+    return tfile
