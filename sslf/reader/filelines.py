@@ -37,7 +37,7 @@ class Reader(MetaData, ReLineEventProcessor):
         self.path = path
         self.mid = 'lines-reader-{}'.format(self.path.replace('/','_'))
         self.meta_data_dir = config.get('meta_data_dir')
-        self.load()
+        self.load() # sets ('mtime','tell','size','sig',); to 0s if there's nothing to load
         self.trunc_check()
 
         try: config.get('something')
@@ -109,13 +109,23 @@ class Reader(MetaData, ReLineEventProcessor):
             self._reset()
         return posix.stat_result( (0,)*10 )
 
-    def _save_stat(self, tell=None):
+    def _save_stat(self, tell=None, pretend_new=False):
         st = self.stat
         self.mtime = st.st_mtime
         self.size  = st.st_size
-        self.tell = 0 if tell is None else tell
+        if pretend_new:
+            self.mtime = 0
+            self.size = 0
+        if tell is not None:
+            self.tell = tell
         if st.st_size > self.sig.b and self.sig.b < self.sbytes:
             self._save_sig()
+        with LogLimit(log, '_save_stat(%s): %s', self.path, limit=LOG_RLIMIT) as ll:
+            ll.debug(self.path, f'pretend_new={pretend_new} mtime={self.mtime} size={self.size}')
+
+    def save(self, tell=None, pretend_new=False):
+        self._save_stat(tell=tell, pretend_new=pretend_new)
+        super(Reader, self).save()
 
     @property
     def ready(self):
@@ -126,16 +136,24 @@ class Reader(MetaData, ReLineEventProcessor):
         return False
 
     def read(self):
+        reached_end = False
         try:
             with open(self.path, 'r') as fh:
+                log.debug('seek(%d)', self.tell)
                 fh.seek(self.tell)
                 while True:
                     line = fh.readline()
+                    self.tell = fh.tell()
                     if not line:
                         break
+                    # NOTE: it doesn't seem right to save tell before yielding,
+                    # but I think the timeing works out that the
+                    # generator.next() doesn't get called at all if the
+                    # iteration aborts
                     yield self.rlep_line(line)
-                    self._save_stat( fh.tell() )
+                reached_end = True
         except IOError as e:
             with LogLimit(log, 'read(%s): %s', self.path, limit=LOG_RLIMIT) as ll:
                 ll.debug(self.path, e)
-        self.save()
+        finally:
+            self.save(pretend_new=not reached_end)
