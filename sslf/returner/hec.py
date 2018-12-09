@@ -200,7 +200,7 @@ class MySplunkHEC:
             dat = json.loads(res.data.decode(self.charset))
 
             if dat['code'] != 0:
-                log.error(f'Splunk HEC Error code={code}: {text}'.format(**dat))
+                log.error('Splunk HEC Error code={code}: {text}'.format(**dat))
 
             return dat
 
