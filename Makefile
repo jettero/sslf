@@ -36,7 +36,8 @@ help:
 # used for testing
 crt: # clean-run-test for installed sslf user
 	find sslf -print0 | xargs -r0 chmod -c o=g
-	sudo chown -c :sslf /etc/sslf.conf && sudo chmod -c g+r /etc/sslf.conf
+	[ -f /etc/sslf.conf.bak ] && sudo cp -va /etc/sslf.conf.bak /etc/sslf.conf && \
+		sudo chown -c :sslf /etc/sslf.conf && sudo chmod -c g+r /etc/sslf.conf
 	sudo systemctl stop sslf
 	sudo find /var/cache/sslf -mindepth 1 -print0 | sudo xargs -r0 rm -rvf
-	sudo -u sslf ./lrunner
+	sudo -u sslf ./lrunner -vl debug

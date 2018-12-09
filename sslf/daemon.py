@@ -201,6 +201,7 @@ class Daemon(daemonize.Daemonize):
         pv['hec'] = apl.returner( apl.hec, apl.token,
             verify_ssl=apl.verify_ssl, use_certifi=apl.use_certifi,
             mem_size=apl.mem_queue_size, disk_queue=apl.disk_queue, disk_size=apl.disk_queue_size,
+            record_age_filter=apl.record_age_filter,
             base_payload={'sourcetype': apl.sourcetype, 'index': apl.index},
         )
 

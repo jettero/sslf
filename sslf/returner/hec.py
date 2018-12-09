@@ -19,6 +19,13 @@ HOSTNAME = socket.gethostname()
 class FilteredEvent(Exception):
     pass
 
+def _mk_timestamp(o):
+    if isinstance(o, (datetime.datetime,datetime.date)):
+        dt = o.timetuple()
+        dtt = time.mktime(dt)
+        return int(dtt)
+    return int(o)
+
 class MyJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, (datetime.datetime,datetime.date)):
@@ -113,6 +120,8 @@ class MySplunkHEC:
         disk_queue=None, mem_size=DEFAULT_MEMORY_SIZE, disk_size=DEFAULT_DISK_SIZE,
         base_payload=None, record_age_filter=27000000):
 
+        self.record_age_filter = record_age_filter
+
         if base_payload is None or not isinstance(base_payload, dict):
             base_payload = dict()
 
@@ -201,7 +210,7 @@ class MySplunkHEC:
             if not dat.get('time'):
                 dat['time'] = _now
         if self.record_age_filter and self.record_age_filter > 0:
-            age = _now - dat['time']
+            age = _mk_timestamp(_now) - _mk_timestamp(dat.get('time', 0))
             if age > self.record_age_filter:
                 raise FilteredEvent('event is too old to bother with')
         return json.dumps(dat, cls=MyJSONEncoder, **jdargs).encode(self.charset)
@@ -253,17 +262,14 @@ class MySplunkHEC:
             encoded_payload = self.encode_event(event, **payload_data)
         except FilteredEvent as e:
             log.debug('filtering event: %s', e)
-            return # silently discard empty events
+            return # silently discard filtered events
         return self._send_event(encoded_payload)
 
     def queue_event(self, event, **payload_data):
         try:
-            encoded_payload = self.encode_event(event, **payload_data)
+            self.q.put( self.encode_event(event, **payload_data) )
         except FilteredEvent as e:
             log.debug('filtering event: %s', e)
-            return # silently discard empty events
-        try:
-            self.q.put(encoded_payload)
         except SSLFQueueCapacityError:
             log.warning("queue overflow during queue_event() … discarding event")
 
