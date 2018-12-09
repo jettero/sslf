@@ -183,10 +183,14 @@ class MySplunkHEC:
         dat = self.base_payload.copy()
         dat.update(payload_data)
         if isinstance(event, dict) and 'event' in event:
+            _event = event.pop('event')
             dat.update(event)
-            event = dat['event']
-        else:
-            dat['event'] = event
+            event = _event
+        if isinstance(event, str):
+            event = event.strip()
+        if not event:
+            raise Exception('event must not be empty')
+        dat['event'] = event
         if 'time' not in dat:
             _e = event if isinstance(event, dict) else dict()
             dat['time'] = dat.get('fields', {}).get('time', _e.get('time'))
