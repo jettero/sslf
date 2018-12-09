@@ -44,7 +44,7 @@ class Daemon(daemonize.Daemonize):
     logger = log
     tz_load_re = '^(GMT|UTC)|^(US|Europe|Asia)/'
     step_interval = 0.5 # seconds
-    step_msg_limit = 50
+    step_msg_limit = 1000
 
     log_level     = 'info'
     log_file      = '/var/log/sslf.log'
@@ -317,9 +317,9 @@ class Daemon(daemonize.Daemonize):
                     if isinstance(sml, int):
                         sml -= 1
                         if sml < 1:
-                            log.debug("send_msg_limit = %d < 1; aborting step early", sml)
+                            log.info("step_msg_limit=%d reached; aborting_step early", self.step_msg_limit)
                             return
-                        log.debug("send_msg_limit = %d", sml)
+                        log.debug("step_msg_limit = %d", sml)
 
     def loop(self):
         while True:

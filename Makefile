@@ -39,4 +39,4 @@ crt: # clean-run-test for installed sslf user
 	sudo chown -c :sslf /etc/sslf.conf && sudo chmod -c g+r /etc/sslf.conf
 	sudo systemctl stop sslf
 	sudo find /var/cache/sslf -mindepth 1 -print0 | sudo xargs -r0 rm -rvf
-	sudo -u sslf ./lrunner -vl debug
+	sudo -u sslf ./lrunner

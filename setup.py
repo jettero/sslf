@@ -18,7 +18,7 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 setup(name='sslf',
-    version       = '1.0.2',
+    version       = '1.0.3',
     description   = 'Splunk Super Light Forwarder',
     author        = 'Paul Miller',
     author_email  = 'paul@jettero.pl',
