@@ -34,7 +34,9 @@ def retrieve_json_events(fname='t/json-return.json'):
 def test_step(jsonloop_daemon, thousand_line_tfile):
     path_key  = list(jsonloop_daemon.paths)[0]
     path_item = jsonloop_daemon.paths[path_key]
-    for i in range(0,100):
+    try: jds_loops = int(os.environ.get('JDS_LOOPS', 100))
+    except: jds_loops = 100
+    for i in range(0, jds_loops):
         log.debug('-- jsonloop_daemon.step() i=%d', i)
         jsonloop_daemon.step()
         qcn = path_item.hec.q.cn
@@ -42,11 +44,13 @@ def test_step(jsonloop_daemon, thousand_line_tfile):
         assert {'qcn': qcn, 'fcn': fcn} == {'qcn': 10, 'fcn': i*10}
         assert path_item.reader.ready == True
 
-    jsonloop_daemon.step()
+    if jds_loops >= 80:
+        jsonloop_daemon.step()
+        qcn = path_item.hec.q.cn
+        fcn = count_file_lines()
+        assert {'qcn': qcn, 'fcn': fcn} == {'qcn': 0, 'fcn': 1000}
+        assert path_item.reader.ready == False
+
     for sline,revent in zip(retrieve_file_lines(), retrieve_json_events()):
         log.debug('sline=%s == revent=%s', sline, revent)
         assert sline == revent
-    qcn = path_item.hec.q.cn
-    fcn = count_file_lines()
-    assert {'qcn': qcn, 'fcn': fcn} == {'qcn': 0, 'fcn': 1000}
-    assert path_item.reader.ready == False
