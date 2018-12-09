@@ -73,6 +73,8 @@ def jsonloop_config(request):
 
 @pytest.fixture
 def jsonloop_daemon(jsonloop_config, mdir):
+    if os.path.isfile('t/json-return.json'):
+        os.unlink('t/json-return.json')
     yield sslf.daemon.Daemon('--config-file', jsonloop_config)
     importlib.reload(sslf.daemon)
 

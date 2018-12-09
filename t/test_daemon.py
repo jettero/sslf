@@ -9,8 +9,19 @@ def test_config(jsonloop_daemon):
     assert len(jsonloop_daemon.paths) == 1
     assert list(jsonloop_daemon.paths)[0].split('/')[-2:] == ['t','file']
 
-def test_step(jsonloop_daemon, thousand_line_tfile):
+def count_file_lines(fname='t/json-return.json'):
+    assert os.path.isfile(fname)
+    with open(fname, 'r') as fh:
+        return len( list(fh.readlines()) )
+
+def test_step(jsonloop_daemon, thousand_line_tfile, caplog):
     jsonloop_daemon.step()
     assert list(jsonloop_daemon.paths.values())[0].hec.q.cn == 10
+    assert 'aborting step early' in caplog.text
     jsonloop_daemon.step()
-    assert os.path.isfile('t/json-return.json')
+    assert count_file_lines() == 10
+    jsonloop_daemon.step()
+    assert count_file_lines() == 20
+    # TODO: when we get to the point that step(), step(), step() produces the
+    # right number of lines; we'll then have to make sure it's not skipping any
+    # either.
