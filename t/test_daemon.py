@@ -34,6 +34,7 @@ def retrieve_json_events(fname='t/json-return.json'):
 def test_step(jsonloop_daemon, thousand_line_tfile):
     path_key  = list(jsonloop_daemon.paths)[0]
     path_item = jsonloop_daemon.paths[path_key]
+    assert jsonloop_daemon.log_file == 't/sslf.log'
     try: jds_loops = int(os.environ.get('JDS_LOOPS', 100))
     except: jds_loops = 100
     for i in range(0, jds_loops):
