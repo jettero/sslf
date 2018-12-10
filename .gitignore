@@ -8,3 +8,4 @@ dist
 build
 jsonloop.conf
 json-return.json
+version.py

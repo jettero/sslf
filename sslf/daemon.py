@@ -207,6 +207,7 @@ class Daemon(daemonize.Daemonize):
 
     def parse_args(self, a):
         parser = argparse.ArgumentParser(description="this is program") # options and program name are automatic
+        parser.add_argument('-V', '--version', action='store_true', help="print version and exit")
         parser.add_argument('-v', '--verbose', action='store_true')
         parser.add_argument('-f', '--daemonize', action='store_true', help="fork and become a daemon")
         parser.add_argument('-l', '--log-level', type=str, default=self.log_level,
@@ -216,6 +217,13 @@ class Daemon(daemonize.Daemonize):
         parser.add_argument('-m', '--meta-data-dir', type=str, default=self.meta_data_dir,
             help="location of meta data (default: %(default)s)")
         args = parser.parse_args(a) if a else parser.parse_args()
+        if args.version:
+            try:
+                from . version import version
+                print(version)
+            except:
+                print("unknown")
+            sys.exit(0)
         self._grok_args(args)
 
     @classmethod

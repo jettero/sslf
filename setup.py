@@ -18,7 +18,12 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 setup(name='sslf',
-    version       = '1.0.4',
+    use_scm_version = {
+        'write_to': 'sslf/version.py',
+        'tag_regex': r'^(?P<prefix>v)(?P<version>\d+\.\d+\.\d+)(?P<suffix>.*)?$',
+        # NOTE: use ./setup.py --version to regenerate version.py and print the
+        # computed version
+    },
     description   = 'Splunk Super Light Forwarder',
     author        = 'Paul Miller',
     author_email  = 'paul@jettero.pl',
@@ -26,6 +31,7 @@ setup(name='sslf',
     tests_require = ['pytest',],
     cmdclass      = {'test': PyTest},
     packages      = find_packages(),
+    setup_requires = [ 'setuptools_scm' ],
     install_requires=[
         'urllib3',
         'daemonize',
