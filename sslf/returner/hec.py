@@ -267,16 +267,20 @@ class MySplunkHEC:
 
     def queue_event(self, event, **payload_data):
         ''' attempt to queue an event
-            returns true when item is queued
-            returns false when item is filtered or queue capacity exceeded
+            returns True when item is queued
+            returns False when item is filtered
+            returns None when capacity exceeded
+            raises exception otherwise
         '''
         try:
             self.q.put( self.encode_event(event, **payload_data) )
             return True
         except FilteredEvent as e:
             log.debug('filtering event: %s', e)
+            return False
         except SSLFQueueCapacityError:
             log.warning("queue overflow during queue_event() … discarding event")
+            return None
 
     def flush(self):
         flush_result = AttrDict(s=0, c=0, ok=True)
