@@ -33,5 +33,11 @@ help:
 
 .PHONY: crt sc super-clean default # mark phony targets so we don't also fire $(S) $@
 
-lrt:
-	./lrunner --config-file /etc/sslf.conf.test -vl debug
+clean-tmp:
+	rm -rvf /tmp/sslf.$$(id -u) || true
+
+clrun: clean-tmp
+	@+ make --no-print-directory lrun
+
+lrun:
+	./lrunner --config-file /etc/sslf.conf.test
