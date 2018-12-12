@@ -266,8 +266,13 @@ class MySplunkHEC:
         return self._send_event(encoded_payload)
 
     def queue_event(self, event, **payload_data):
+        ''' attempt to queue an event
+            returns true when item is queued
+            returns false when item is filtered or queue capacity exceeded
+        '''
         try:
             self.q.put( self.encode_event(event, **payload_data) )
+            return True
         except FilteredEvent as e:
             log.debug('filtering event: %s', e)
         except SSLFQueueCapacityError:
