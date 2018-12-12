@@ -44,7 +44,7 @@ class Daemon(daemonize.Daemonize):
     logger = log
     tz_load_re = '^(GMT|UTC)|^(US|Europe|Asia)/'
     step_interval = 0.5 # sleep seconds between step()s
-    step_runtime_max = 4 # max time in step() before loop break
+    step_runtime_max = 2 # max time in step() before loop break
     record_age_filter = 27000000 # 27 ksec is roughly a month
 
     log_level     = 'info'
