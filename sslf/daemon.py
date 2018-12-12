@@ -43,8 +43,8 @@ class Daemon(daemonize.Daemonize):
     sourcetype = None
     logger = log
     tz_load_re = '^(GMT|UTC)|^(US|Europe|Asia)/'
-    step_interval = 0.5 # seconds
-    step_msg_limit = 1000
+    step_interval = 0.5 # sleep seconds between step()s
+    step_runtime_max = 4 # max time in step() before loop break
     record_age_filter = 27000000 # 27 ksec is roughly a month
 
     log_level     = 'info'
@@ -66,7 +66,7 @@ class Daemon(daemonize.Daemonize):
         'verbose', 'daemonize', 'config_file', 'meta_data_dir',
         'hec','token','index','sourcetype', 'pid_file',
         'log_level', 'log_file', 'log_fmt_cli', 'log_fmt',
-        'tz_load_re', 'step_msg_limit', 'step_interval', 'disk_queue',
+        'tz_load_re', 'step_runtime_max', 'step_interval', 'disk_queue',
         'mem_queue_size', 'disk_queue_size', 'verify_ssl', 'use_certifi',
         'returner', 'record_age_filter'
     )
@@ -278,13 +278,30 @@ class Daemon(daemonize.Daemonize):
             else:
                 self.add_path_config(k, config[k])
 
+    @property
+    def run_too_long(self):
+        srs = self.step_runtime_start
+        if srs < 0:
+            return True
+        if srs > 0:
+            if (time.time()-srs) > self.step_runtime_max:
+                self.start_runtime_timer(-1)
+                return True
+        return False
+
+    @property
+    def step_runtime_start(self):
+        try: return self._step_runtime_start
+        except: pass
+        return self.start_runtime_timer()
+
+    def start_runtime_timer(self, v=None):
+        self._step_runtime_start = v if v is not None else time.time()
+        return self._step_runtime_start
+
     def step(self):
         log.debug('------------------------------ STEP ------------------------------')
-
-        if isinstance(self.step_msg_limit, int) and self.step_msg_limit > 0:
-            sml = self.step_msg_limit
-        else:
-            sml = None
+        self.start_runtime_timer()
 
         done = set()
         for pv in self.paths.values():
@@ -316,20 +333,33 @@ class Daemon(daemonize.Daemonize):
                 log.info("setting %s to backoff (skip_steps: %s)", pv.hec.url, rb.n)
 
         for pv in self.paths.values():
+            event_count,queued_count,filtered_count,rejected_count = 0,0,0,0
             if pv.reader.ready:
                 log.debug("%s says its ready, reading", pv.reader)
                 for evr in pv.reader.read():
                     log.debug("received event from %s, queueing for hec %s", pv.reader, pv.hec)
                     try:
-                        pv.hec.queue_event(evr)
+                        # NOTE: if queue_event() is untrue, the event was filtered
+                        res = pv.hec.queue_event(evr)
+                        event_count += 1
+                        if res is True:    queued_count   += 1
+                        elif res is False: filtered_count += 1
+                        else:              rejected_count += 1
                     except Exception as e:
                         log.error("error queueing event for %s: %s", pv.hec, e)
-                    if isinstance(sml, int):
-                        sml -= 1
-                        if sml < 1:
-                            log.info("step_msg_limit=%d reached; aborting daemon.step() early", self.step_msg_limit)
-                            return
-                        log.debug("step_msg_limit = %d", sml)
+                    if self.run_too_long:
+                        log.debug('step_runtime_max=%d reached', self.step_runtime_max)
+                        # NOTE: we only break the inner loop so each reader can
+                        # emit at least one item per loop
+                        break
+                    if rejected_count > 1:
+                        log.error('queue rejected more than one item, aborting read')
+                        break
+                if event_count > 0:
+                    log.info("%s -> %s; events=%d filtered=%d rejected=%d queued=%d",
+                        pv.reader.path, pv.hec.url,
+                        event_count, filtered_count,
+                        rejected_count, queued_count)
 
     def loop(self):
         while True:
