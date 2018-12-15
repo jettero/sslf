@@ -24,6 +24,8 @@ def _mk_timestamp(o):
         dt = o.timetuple()
         dtt = time.mktime(dt)
         return int(dtt)
+    if isinstance(o,str) and '.' in o:
+        o = o.split('.')[0]
     return int(o)
 
 class MyJSONEncoder(json.JSONEncoder):
