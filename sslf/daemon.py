@@ -222,7 +222,7 @@ class Daemon(daemonize.Daemonize):
             help="location of meta data (default: %(default)s)")
         parser.add_argument('--show-config', action='store_true', help='show the final daemon config and exit')
         parser.add_argument('-o', '--opt', nargs='*', default=tuple(),
-            help='supply daemon options (eg): -o index=tmp -o use_certifi=false')
+            help='supply daemon options (eg): -o index=tmp use_certifi=false')
         parser.add_argument('-p', '--path', nargs='*', default=tuple(),
             help='override path configs with the form /location:opt=val,opt=val')
         args = parser.parse_args(a) if a else parser.parse_args()
@@ -238,15 +238,16 @@ class Daemon(daemonize.Daemonize):
         if args.show_config:
             self.read_config()
 
-        for o in args.opt:
+        if args.opt:
             additional_args = dict()
-            try:
-                k,v = o.split('=')
-                additional_args[k] = v
-            except ValueError as e:
-                raise Exception(f'--opt {o} not understood') from e
-            if k not in self._fields:
-                raise Exception(f'--opt {o} unknown field')
+            for o in args.opt:
+                try:
+                    k,v = o.split('=')
+                    additional_args[k] = v
+                except ValueError as e:
+                    raise Exception(f'--opt {o} not understood') from e
+                if k not in self._fields:
+                    raise Exception(f'--opt {o} unknown field')
             if additional_args:
                 self._grok_args(additional_args)
 
