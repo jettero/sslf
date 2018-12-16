@@ -1,7 +1,9 @@
 
+import time
 import os
 import simplejson as json
 import logging
+import pytest
 
 import sslf.daemon
 
@@ -31,6 +33,16 @@ def retrieve_json_events(fname='t/json-return.json'):
         pline = json.loads(line)
         yield pline['event'].rstrip()
 
+def _measure_timings():
+    now = time.time()
+    for i in range(0,10):
+        time.sleep(0.1)
+    dt = time.time() - now
+    if abs(dt - 1) < 0.1:
+        return False
+    return True
+
+@pytest.mark.skipif(_measure_timings(), reason="timing based tests in inconsistent environment")
 def test_step(jsonloop_daemon, thousand_line_tfile):
     path_key  = list(jsonloop_daemon.paths)[0]
     path_item = jsonloop_daemon.paths[path_key]
