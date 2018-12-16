@@ -223,6 +223,8 @@ class Daemon(daemonize.Daemonize):
         parser.add_argument('--show-config', action='store_true', help='show the final daemon config and exit')
         parser.add_argument('-o', '--opt', nargs='*', default=tuple(),
             help='supply daemon options (eg): -o index=tmp -o use_certifi=false')
+        parser.add_argument('-p', '--path', nargs='*', default=tuple(),
+            help='override path configs with the form /location:opt=val,opt=val')
         args = parser.parse_args(a) if a else parser.parse_args()
         if args.version:
             try:
@@ -232,6 +234,9 @@ class Daemon(daemonize.Daemonize):
                 print("unknown")
             sys.exit(0)
         self._grok_args(args)
+
+        if args.show_config:
+            self.read_config()
 
         for o in args.opt:
             additional_args = dict()
@@ -245,8 +250,23 @@ class Daemon(daemonize.Daemonize):
             if additional_args:
                 self._grok_args(additional_args)
 
+        if args.path:
+            self._path_config = dict()
+            for p in args.path:
+                s = p.split(':')
+                p = s.pop(0)
+                d = dict()
+                if s:
+                    s = s[0]
+                    for o in s.split(','):
+                        try:
+                            k,v = o.split('=')
+                            d[k] = v
+                        except ValueError as e:
+                            raise Exception(f'{p}:{o} not understood') from e
+                self._path_config[p] = d
+
         if args.show_config:
-            self.read_config()
             self.update_path_config()
             m = max([ len(i) for i in self._fields ]) + 1
             for f in self._fields:
