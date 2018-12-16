@@ -31,6 +31,11 @@ def retrieve_json_events(fname='t/json-return.json'):
         pline = json.loads(line)
         yield pline['event'].rstrip()
 
+# NOTE: before step_runtime_max, I experimented with step_msg_limit to limit
+# the number of events that could be processed per step() … that was relatively
+# easy to test, but the timing based limits aren't so easy and so, this test
+# doesn't actually make sense anymore and I can't think of a way to do it...
+#
 def test_step(jsonloop_daemon, thousand_line_tfile):
     path_key  = list(jsonloop_daemon.paths)[0]
     path_item = jsonloop_daemon.paths[path_key]
