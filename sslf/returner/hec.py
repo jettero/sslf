@@ -211,7 +211,7 @@ class MySplunkHEC:
             dat['time'] = dat.get('fields', {}).get('time', _e.get('time'))
             if not dat.get('time'):
                 dat['time'] = _now
-        if self.record_age_filter and self.record_age_filter > 0:
+        if self.record_age_filter:
             age = _mk_timestamp(_now) - _mk_timestamp(dat.get('time', 0))
             if age > self.record_age_filter:
                 raise FilteredEvent('event is too old to bother with')
