@@ -101,6 +101,8 @@ class Daemon(daemonize.Daemonize):
             logger=log # same
         )
 
+        self._debug_run_too_long_delay = False
+
     def _barf_settings(self):
         ret = dict()
         method_type = type(self._barf_settings)
@@ -280,6 +282,9 @@ class Daemon(daemonize.Daemonize):
 
     @property
     def run_too_long(self):
+        if self._debug_run_too_long_delay:
+            log.info("debug_run_too_long_delay time.sleep(%0.2f)", self._debug_run_too_long_delay)
+            time.sleep(self._debug_run_too_long_delay)
         srs = self.step_runtime_start
         if srs < 0:
             return True
