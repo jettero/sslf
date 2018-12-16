@@ -31,17 +31,19 @@ def retrieve_json_events(fname='t/json-return.json'):
         pline = json.loads(line)
         yield pline['event'].rstrip()
 
-# NOTE: before step_runtime_max, I experimented with step_msg_limit to limit
-# the number of events that could be processed per step() … that was relatively
-# easy to test, but the timing based limits aren't so easy and so, this test
-# doesn't actually make sense anymore and I can't think of a way to do it...
-#
 def test_step(jsonloop_daemon, thousand_line_tfile):
     path_key  = list(jsonloop_daemon.paths)[0]
     path_item = jsonloop_daemon.paths[path_key]
+
+    # NOTE: before step_runtime_max, I experimented with step_msg_limit to limit
+    # the number of events that could be processed per step() … that was relatively
+    # easy to test, but the timing based limits aren't so easy to test and so
+    # this test may generate false-failures from time to time …
+    jsonloop_daemon._debug_run_too_long_delay = 0.1
     assert jsonloop_daemon.log_file == 't/sslf.log'
-    try: jds_loops = int(os.environ.get('JDS_LOOPS', 100))
-    except: jds_loops = 100
+    try: jds_loops = int(os.environ.get('JDS_LOOPS', 3))
+    except: jds_loops = 3
+
     for i in range(0, jds_loops):
         log.debug('-- jsonloop_daemon.step() i=%d', i)
         jsonloop_daemon.step()
@@ -50,12 +52,13 @@ def test_step(jsonloop_daemon, thousand_line_tfile):
         assert {'qcn': qcn, 'fcn': fcn} == {'qcn': 10, 'fcn': i*10}
         assert path_item.reader.ready == True
 
-    if jds_loops >= 80:
+    jsonloop_daemon._debug_run_too_long_delay = 0
+    for i in range(1,10):
         jsonloop_daemon.step()
-        qcn = path_item.hec.q.cn
-        fcn = count_file_lines()
-        assert {'qcn': qcn, 'fcn': fcn} == {'qcn': 0, 'fcn': 1000}
-        assert path_item.reader.ready == False
+    qcn = path_item.hec.q.cn
+    fcn = count_file_lines()
+    assert {'qcn': qcn, 'fcn': fcn} == {'qcn': 0, 'fcn': 1000}
+    assert path_item.reader.ready == False
 
     for sline,revent in zip(retrieve_file_lines(), retrieve_json_events()):
         log.debug('sline=%s == revent=%s', sline, revent)
