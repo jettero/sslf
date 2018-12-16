@@ -62,6 +62,8 @@ class Daemon(daemonize.Daemonize):
 
     returner = HEC
 
+    verify_ssl = True
+
     _fields = (
         'verbose', 'daemonize', 'config_file', 'meta_data_dir',
         'hec','token','index','sourcetype', 'pid_file',
@@ -218,6 +220,7 @@ class Daemon(daemonize.Daemonize):
             help="config file (default: %(default)s)")
         parser.add_argument('-m', '--meta-data-dir', type=str, default=self.meta_data_dir,
             help="location of meta data (default: %(default)s)")
+        parser.add_argument('--show-config', action='store_true', help='show the final daemon config and exit')
         args = parser.parse_args(a) if a else parser.parse_args()
         if args.version:
             try:
@@ -227,6 +230,22 @@ class Daemon(daemonize.Daemonize):
                 print("unknown")
             sys.exit(0)
         self._grok_args(args)
+
+        if args.show_config:
+            self.read_config()
+            self.update_path_config()
+            m = max([ len(i) for i in self._fields ]) + 1
+            for f in self._fields:
+                fh = f + ':'
+                v = getattr(self, f)
+                print(f'{fh:{m}} {v}')
+            for path in self.paths:
+                print(f'\n{path}:')
+                m = max([ len(i) for i in self.paths[path] ]) + 1
+                for k,v in self.paths[path].items():
+                    kh = k + ':'
+                    print(f'    {kh:{m}} {v}')
+            sys.exit(0)
 
     @classmethod
     def _config_reader(self):
