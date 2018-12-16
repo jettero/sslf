@@ -1,10 +1,13 @@
 
-from sslf.util import AttrDict
-from sslf.returner.hec import HEC
+import time
+import pytest
 import simplejson as json
 
+from sslf.util import AttrDict
+from sslf.returner.hec import HEC, FilteredEvent
+
 def test_payload():
-    h = HEC('https://whatever', 'secret-token')
+    h = HEC('https://whatever', 'secret-token', record_age_filter=0)
     event_dat = {'item1': 'one'}
     payload_dat = { 'time': 3, 'sourcetype': 'yeah', 'host': 'localhost', 'source': 'test-payload',
         'index': 'bs', '_jdargs': {'sort_keys': True} }
@@ -47,6 +50,22 @@ def test_payload():
     assert hep == { 'event': 'supz mang', 'source': '/something/strange',
         'fields': {'time': 24, 'lolol': 'yes'}, 'index': 'main',
         'sourcetype': 'json', 'time': 24, 'host': 'localhost' }
+
+def test_record_age_filter():
+    h = HEC('https://whatever', 'secret-token', record_age_filter=10000)
+
+    now = time.time()
+
+    event_dat = {'item1': 'one'}
+    payload_dat = { 'time': now - 10000, 'sourcetype': 'yeah', 'host': 'localhost', 'source': 'test-payload',
+        'index': 'bs', '_jdargs': {'sort_keys': True} }
+
+    hec_encoding = h.encode_payload(event_dat, **payload_dat)
+    assert bool(hec_encoding)
+
+    with pytest.raises(FilteredEvent):
+        payload_dat['time'] = now - 10001
+        hec_encoding = h.encode_payload(event_dat, **payload_dat)
 
 def test_combine():
     h1 = HEC('https://whatever', 'secret-token')
