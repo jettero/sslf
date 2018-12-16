@@ -16,6 +16,10 @@ fclean:
 clean:
 	@+ if [ -d .git ]; then $(M) gclean; else $(M) fclean; fi
 
+lt last-test:
+	@echo pytest -x --log-cli-level debug
+	@pytest -x --log-cli-level debug || /bin/true
+
 sc super-clean: clean uninstall
 
 ti test-install:
