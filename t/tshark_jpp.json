@@ -1,0 +1,104 @@
+{
+  "event": {
+    "frame": {
+      "interface_id": "0",
+      "encap_type": "1",
+      "time": "Dec 21, 2018 10:55:42.757659984 EST",
+      "offset_shift": "0.000000000",
+      "time_epoch": "1545407742.757659984",
+      "time_delta": "0.000000000",
+      "time_delta_displayed": "0.000000000",
+      "time_relative": "0.000000000",
+      "number": "1",
+      "len": "74",
+      "cap_len": "74",
+      "marked": "0",
+      "ignored": "0",
+      "protocols": "eth:ethertype:ip:tcp"
+    },
+    "eth": {
+      "dst": {
+        "value": "01:02:03:04:05:06",
+        "resolved": "01:02:03:04:05:06"
+      },
+      "src": {
+        "value": "fe:ed:be:ef:00:00",
+        "resolved": "fe:ed:be:ef:00:00"
+      },
+      "type": "0x00000800"
+    },
+    "ip": {
+      "version": "4",
+      "hdr_len": "20",
+      "dsfield": {
+        "value": "0x00000000",
+        "dscp": "0",
+        "ecn": "0"
+      },
+      "len": "60",
+      "id": "0x00009f38",
+      "flags": {
+        "value": "0x00000002",
+        "rb": "0",
+        "df": "1",
+        "mf": "0"
+      },
+      "frag_offset": "0",
+      "ttl": "64",
+      "proto": "6",
+      "checksum": "0x00003e08",
+      "checksum_status": "2",
+      "src": "10.1.2.3",
+      "addr": "5.2.19.7",
+      "src_host": "10.1.2.3",
+      "host": "5.2.19.7",
+      "dst": "5.2.19.7",
+      "dst_host": "5.2.19.7"
+    },
+    "tcp": {
+      "srcport": "45510",
+      "dstport": "80",
+      "port": "80",
+      "stream": "0",
+      "len": "0",
+      "seq": "0",
+      "ack": "0",
+      "hdr_len": "40",
+      "flags": {
+        "value": "0x00000002",
+        "res": "0",
+        "ns": "0",
+        "cwr": "0",
+        "ecn": "0",
+        "urg": "0",
+        "ack": "0",
+        "push": "0",
+        "reset": "0",
+        "syn": "1",
+        "fin": "0",
+        "str": "\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7S\u00c2\u00b7"
+      },
+      "window_size_value": "29200",
+      "window_size": "29200",
+      "checksum": "0x0000f408",
+      "checksum_status": "2",
+      "urgent_pointer": "0",
+      "options": {
+        "value": "02:04:05:b4:04:02:08:0a:2d:4b:ef:7d:00:00:00:00:01:03:03:0a",
+        "mss": "",
+        "sack_perm": "1"
+      },
+      "options_mss": {
+        "val": "1460"
+      },
+      "options_type": {
+        "copy": "0",
+        "class": "0",
+        "number": "1"
+      }
+    },
+    "timestamp": "1545407742757"
+  },
+  "source": null,
+  "fields": {}
+}

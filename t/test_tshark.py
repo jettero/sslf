@@ -10,6 +10,11 @@ def tshark_json():
         yield json.load(fh)
 
 @pytest.fixture
+def tshark_jpp_json():
+    with open('t/tshark_jpp.json', 'r') as fh:
+        yield json.load(fh)
+
+@pytest.fixture
 def c0():
     return tshark(config={
         'local_dst': 'ld',
@@ -26,24 +31,7 @@ def test_cmd(c0):
         '-j', 'ip tcp', '-n' ]
     assert c0.parse_time == 'timestamp'
 
-def test_post_processing(c0, tshark_json):
+def test_post_processing(c0, tshark_json, tshark_jpp_json):
     pp = c0.json_post_process(tshark_json)
-    ppe = pp['event']
-    tsl = tshark_json['layers']
-    assert 'ip' in ppe
-    assert 'ip' in tsl
 
-    for p in ('ip', 'tcp'):
-        c = 0
-        for k in tsl[p]:
-            pr = f'{p}_'
-            prpr = f'{pr}{pr}'
-            if k.startswith(prpr):
-                m = k[len(prpr):]
-                assert ppe[p][m] == tsl[p][k]
-                c += 1
-            elif k.startswith(pr):
-                m = k[len(pr):]
-                assert ppe[p][m] == tsl[p][k]
-                c += 1
-        assert len(ppe[p]) == c
+    assert pp == tshark_jpp_json
