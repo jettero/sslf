@@ -1,0 +1,51 @@
+{
+  "timestamp": "1545404012269",
+  "layers": {
+    "frame": {
+      "filtered": "frame"
+    },
+    "eth": {
+      "filtered": "eth"
+    },
+    "ip": {
+      "ip_ip_version": "4",
+      "ip_ip_hdr_len": "20",
+      "ip_ip_dsfield": "0x00000000",
+      "filtered": "text",
+      "ip_ip_len": "52",
+      "ip_ip_id": "0x00009458",
+      "ip_ip_flags": "0x00000002",
+      "ip_ip_frag_offset": "0",
+      "ip_ip_ttl": "64",
+      "ip_ip_proto": "6",
+      "ip_ip_checksum": "0x0000c52f",
+      "ip_ip_checksum_status": "2",
+      "ip_ip_src": "10.1.2.3",
+      "ip_ip_addr": "52.112.65.161",
+      "ip_ip_src_host": "10.1.2.3",
+      "ip_ip_host": "52.112.65.161",
+      "ip_ip_dst": "52.112.65.161",
+      "ip_ip_dst_host": "52.112.65.161",
+      "ip_text": "Destination GeoIP: AS8075 Microsoft Corporation, United States, Wilmington, DE, 39.564499, -75.597000"
+    },
+    "tcp": {
+      "tcp_tcp_srcport": "38460",
+      "tcp_tcp_dstport": "443",
+      "tcp_tcp_port": "443",
+      "tcp_tcp_stream": "0",
+      "tcp_tcp_len": "0",
+      "tcp_tcp_seq": "1",
+      "tcp_tcp_ack": "1",
+      "tcp_tcp_hdr_len": "32",
+      "tcp_tcp_flags": "0x00000010",
+      "filtered": "tcp_options",
+      "tcp_tcp_window_size_value": "43",
+      "tcp_tcp_window_size": "43",
+      "tcp_tcp_window_size_scalefactor": "-1",
+      "tcp_tcp_checksum": "0x0000ec33",
+      "tcp_tcp_checksum_status": "2",
+      "tcp_tcp_urgent_pointer": "0",
+      "tcp_tcp_options": "01:01:08:0a:2d:3d:b4:70:01:19:01:d8"
+    }
+  }
+}
