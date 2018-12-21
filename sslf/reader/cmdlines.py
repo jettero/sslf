@@ -21,7 +21,7 @@ class Reader(ReLineEventProcessor):
         #  [/usr/bin/whatever]
         #  reader = cmdlines
         #  cmd = /usr/bin/whatever --long-arg "stuff here"
-        self.cmd = config.get('cmd', path)
+        self.cmd = self.compute_command(config)
         self.prlimit = config.get('proc_restart_rlimit', PROC_RESTART_RLIMIT)
         self.setup_rlep(config)
 
@@ -36,6 +36,9 @@ class Reader(ReLineEventProcessor):
                 self.sleep_wrapper = 60 if self.sleep_wrapper else False
         else:
             self.sleep_wrapper = False
+
+    def compute_command(self, config):
+        return config.get('cmd', self.path)
 
     def __repr__(self):
         return f'cmdlines({self.cmd_str})'
