@@ -3,7 +3,6 @@ from sslf.reader.cmdlines import Reader as CommandLinesReader
 from sslf.transform.json import JSONEventProcessor
 
 class Reader(CommandLinesReader, JSONEventProcessor):
-
     def read(self):
         l = True
         while self.spoll and l:

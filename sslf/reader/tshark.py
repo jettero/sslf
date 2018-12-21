@@ -1,5 +1,9 @@
 
+import logging
+
 from sslf.reader.cmdjson import Reader as CmdJSONReader
+
+log = logging.getLogger('sslf:read:tshark')
 
 class Reader(CmdJSONReader):
     def __init__(self, *a, **kw):
@@ -22,8 +26,10 @@ class Reader(CmdJSONReader):
 
         filter     = config.get('pcap_filter', '{tcp_syn} and {in_out}')
         interface  = config.get('interface', 'eth0')
-        layers     = config.get('layers', 'ip')
+        out_proto  = config.get('out_proto', 'ip tcp')
         dns        = config.get('dns', False)
+
+        self.out_proto = out_proto.split()
 
         max = 50
         while max > 0 and '{' in filter and '}' in filter:
@@ -31,12 +37,26 @@ class Reader(CmdJSONReader):
             max -= 1
 
         # cmd = tshark -i eth0 -T ek -f 'net 10.2.3.4/23 and tcp[tcpflags] & tcp-syn != 0' -nj ip
-        cmd = f'tshark -i {interface} -T ek -f "{filter}" -j {layers}'
+        cmd = f'tshark -i {interface} -T ek -f "{filter}" -j "{out_proto}"'
         if not dns:
             cmd += ' -n'
         return cmd
 
-    # def read(self):
-    #     for item in super(Reader, self).read():
-    #         yield item
-
+    def json_post_process(self, item):
+        if 'timestamp' in item and 'layers' in item:
+            actual = dict()
+            for op in self.out_proto:
+                ldat = item['layers'][op]
+                mdat = dict()
+                for lk in ldat:
+                    opp = op + '_'
+                    if lk.startswith(opp):
+                        mk = lk
+                        while mk.startswith(opp):
+                            mk = mk[len(opp):]
+                        mdat[mk] = ldat[lk]
+                if mdat:
+                    actual[op] = mdat
+            if actual:
+                actual['timestamp'] = item['timestamp']
+                return super(Reader, self).json_post_process(actual)
