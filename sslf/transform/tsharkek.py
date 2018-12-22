@@ -34,33 +34,15 @@ class TsharkEKProcessor(JSONEventProcessor):
                             if ds[0] == lname:
                                 dissector = '_'.join(ds[1:])
                             if dissector in mdat and not isinstance(mdat[dissector], dict):
-                                mdat[dissector] = { 'value': mdat[dissector] }
+                                mdat[dissector] = { 'val': mdat[dissector] }
                             elif dissector not in mdat:
                                 mdat[dissector] = dict()
                             mdat[dissector][value_name] = ldat[k]
                     else:
                         rejected_fields.add(k)
-                if rejected_fields:
-                    other = dict()
-                    for rf in rejected_fields:
-                        _rf = rf
-                        for bs in sorted(BS_REMAPS, key=lambda x: 0-len(x)):
-                            _rf = _rf.replace(bs, BS_REMAPS[bs])
-                        rfs = _rf.split('_')
-                        o = { lname: mdat }
-                        while rfs and isinstance(o, dict) and rfs[0] in o and isinstance(o[rfs[0]], dict):
-                            o = o[rfs.pop(0)]
-                        assert len(rfs) > 0
-                        _rf = '_'.join(rfs)
-                        if isinstance(o, dict) and o is not mdat and _rf != rf and _rf not in o:
-                            o[_rf] = ldat[rf]
-                            log.debug('reject( ldat[%s] --> o[%s] )', rf, _rf)
-                        else:
-                            other[rf] = ldat[rf]
-                            log.debug('reject( other[%s] )', rf)
-                    if other:
-                        mdat['other'] = other
                 if mdat:
+                    if rejected_fields:
+                        mdat['other'] = { rf: ldat[rf] for rf in rejected_fields }
                     actual[lname] = mdat
             if actual:
                 actual['timestamp'] = item['timestamp']
