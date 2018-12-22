@@ -22,13 +22,16 @@ class TsharkEKProcessor(JSONEventProcessor):
             for lname,ldat in item['layers'].items():
                 mdat = dict()
                 rejected_fields = set()
-                for k in ldat:
+                for lk in ldat:
+                    k = lk
+                    for bs in sorted(BS_REMAPS, key=lambda x: 0-len(x)):
+                        k = k.replace(bs, BS_REMAPS[bs])
                     m = key_key_re.search(k)
                     if m:
-                        log.debug('key_key_re.search(%s) -> %s', k, m.groups())
+                        log.debug('key_key_re.search(%s) -> %s', lk, m.groups())
                         prefix, dissector, value_name = m.groups()
                         if dissector == lname:
-                            mdat[value_name] = ldat[k]
+                            mdat[value_name] = ldat[lk]
                         else:
                             ds = dissector.split('_')
                             if ds[0] == lname:
@@ -37,12 +40,18 @@ class TsharkEKProcessor(JSONEventProcessor):
                                 mdat[dissector] = { 'val': mdat[dissector] }
                             elif dissector not in mdat:
                                 mdat[dissector] = dict()
-                            mdat[dissector][value_name] = ldat[k]
+                            mdat[dissector][value_name] = ldat[lk]
                     else:
-                        rejected_fields.add(k)
+                        rejected_fields.add((k,lk))
                 if mdat:
                     if rejected_fields:
-                        mdat['other'] = { rf: ldat[rf] for rf in rejected_fields }
+                        for k,rf in rejected_fields:
+                            if k.startswith(lname + '_'):
+                                k = k[len(lname)+1:]
+                            while k in mdat:
+                                k += '_'
+                            log.debug('reject( %s ) -> %s', rf, k)
+                            mdat[k] = ldat[rf]
                     actual[lname] = mdat
             if actual:
                 actual['timestamp'] = item['timestamp']
