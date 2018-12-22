@@ -25,7 +25,17 @@
         "value": "fe:ed:be:ef:00:00",
         "resolved": "fe:ed:be:ef:00:00"
       },
-      "type": "0x00000800"
+      "type": "0x00000800",
+      "other": {
+        "eth_dst_eth_lg": "0",
+        "eth_dst_eth_addr_resolved": "01:02:03:04:05:06",
+        "eth_src_eth_ig": "0",
+        "eth_src_eth_addr": "fe:ed:be:ef:00:00",
+        "eth_src_eth_lg": "0",
+        "eth_dst_eth_addr": "01:02:03:04:05:06",
+        "eth_src_eth_addr_resolved": "fe:ed:be:ef:00:00",
+        "eth_dst_eth_ig": "0"
+      }
     },
     "ip": {
       "version": "4",
@@ -53,7 +63,20 @@
       "src_host": "10.1.2.3",
       "host": "5.2.19.7",
       "dst": "5.2.19.7",
-      "dst_host": "5.2.19.7"
+      "dst_host": "5.2.19.7",
+      "other": {
+        "text_ip_geoip_dst_city": "Ashburn, VA",
+        "text_ip_geoip_country": "United States",
+        "text_ip_geoip_asnum": "AS14618 Amazon.com, Inc.",
+        "text_ip_geoip_dst_lat": "39.033501",
+        "text_ip_geoip_lon": "-77.483803",
+        "text_ip_geoip_dst_asnum": "AS14618 Amazon.com, Inc.",
+        "text_ip_geoip_city": "Ashburn, VA",
+        "ip_text": "Destination GeoIP: AS14618 Amazon.com, Inc., United States, Ashburn, VA, 39.033501, -77.483803",
+        "text_ip_geoip_lat": "39.033501",
+        "text_ip_geoip_dst_country": "United States",
+        "text_ip_geoip_dst_lon": "-77.483803"
+      }
     },
     "tcp": {
       "srcport": "45510",
@@ -95,6 +118,26 @@
         "copy": "0",
         "class": "0",
         "number": "1"
+      },
+      "other": {
+        "tcp_options_mss_tcp_option_len": "4",
+        "text_tcp_options_timestamp_tsecr": "0",
+        "text_tcp_options_timestamp_tsval": "759951229",
+        "tcp_options_mss_tcp_option_kind": "2",
+        "tcp_options_text": "Window scale: 10 (multiply by 1024)",
+        "tcp_flags_syn__ws_expert": {
+          "_ws_expert_tcp_connection_syn": "",
+          "_ws_expert__ws_expert_message": "Connection establish request (SYN): server port 80",
+          "_ws_expert__ws_expert_severity": "2097152",
+          "_ws_expert__ws_expert_group": "33554432"
+        },
+        "text_tcp_options_type": "1",
+        "tcp_options_sack_perm_tcp_option_len": "2",
+        "tcp_options_sack_perm_tcp_option_kind": "4",
+        "text_tcp_option_len": "3",
+        "text_tcp_options_wscale_multiplier": "1024",
+        "text_tcp_options_wscale_shift": "10",
+        "text_tcp_option_kind": "3"
       }
     },
     "timestamp": "1545407742757"

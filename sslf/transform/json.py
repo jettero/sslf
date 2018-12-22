@@ -4,7 +4,7 @@ log = logging.getLogger("sslf:trans:json")
 
 import simplejson as json
 from simplejson.errors import JSONDecodeError
-from sslf.transform.rlep import ReLineEventProcessor
+from .rlep import ReLineEventProcessor
 
 class JSONEventProcessor(ReLineEventProcessor):
     setup_json = ReLineEventProcessor.setup_rlep
