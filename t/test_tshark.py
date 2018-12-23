@@ -3,6 +3,14 @@ import pytest
 import simplejson as json
 
 from sslf.reader.tshark import Reader as tshark
+from sslf.transform.tsharkek import dedup_key_prefixes
+
+def test_dedup_kp():
+    input = {'lol': 'wut', 'lol_supz_mang': 'mang', 'lol_supz_dood': 'dood', 'long_key_thing': 'thing', 'long_key_other': 'other' }
+    output = {'lol': {'val': 'wut', 'supz': {'mang': 'mang', 'dood': 'dood'}},
+        'long_key': {'other': 'other', 'thing': 'thing'},
+    }
+    assert dedup_key_prefixes(input) == output
 
 @pytest.fixture
 def tshark_json():
@@ -33,5 +41,11 @@ def test_cmd(c0):
 
 def test_post_processing(c0, tshark_json, tshark_jpp_json):
     pp = c0.json_post_process(tshark_json)
+
+    # this test is kindof pointless... I just wrote out the sample to a file
+    # eyeballed it to see if it was shaped how I wanted ...  then we check to
+    # see if the process that generated the file generates the file
+    #
+    # 4. ?profit?
 
     assert pp == tshark_jpp_json

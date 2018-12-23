@@ -1,81 +1,113 @@
 {
   "event": {
     "frame": {
-      "interface_id": "0",
-      "encap_type": "1",
-      "time": "Dec 21, 2018 10:55:42.757659984 EST",
-      "offset_shift": "0.000000000",
-      "time_epoch": "1545407742.757659984",
-      "time_delta": "0.000000000",
-      "time_delta_displayed": "0.000000000",
-      "time_relative": "0.000000000",
+      "time": {
+        "val": "Dec 21, 2018 10:55:42.757659984 EST",
+        "epoch": "1545407742.757659984",
+        "delta": {
+          "val": "0.000000000",
+          "displayed": "0.000000000"
+        },
+        "relative": "0.000000000"
+      },
       "number": "1",
       "len": "74",
-      "cap_len": "74",
       "marked": "0",
       "ignored": "0",
-      "protocols": "eth:ethertype:ip:tcp"
+      "protocols": "eth:ethertype:ip:tcp",
+      "interface": {
+        "id": "0"
+      },
+      "encap": {
+        "type": "1"
+      },
+      "cap": {
+        "len": "74"
+      },
+      "offset": {
+        "shift": "0.000000000"
+      }
     },
     "eth": {
       "dst": {
-        "value": "01:02:03:04:05:06",
-        "resolved": "01:02:03:04:05:06"
+        "val": "01:02:03:04:05:06",
+        "resolved": "01:02:03:04:05:06",
+        "eth": {
+          "ig": "0",
+          "lg": "0",
+          "addr": {
+            "val": "01:02:03:04:05:06",
+            "resolved": "01:02:03:04:05:06"
+          }
+        }
       },
       "src": {
-        "value": "fe:ed:be:ef:00:00",
-        "resolved": "fe:ed:be:ef:00:00"
+        "val": "fe:ed:be:ef:00:00",
+        "resolved": "fe:ed:be:ef:00:00",
+        "eth": {
+          "lg": "0",
+          "addr": {
+            "val": "fe:ed:be:ef:00:00",
+            "resolved": "fe:ed:be:ef:00:00"
+          },
+          "ig": "0"
+        }
       },
-      "type": "0x00000800",
-      "other": {
-        "eth_dst_eth_lg": "0",
-        "eth_dst_eth_addr_resolved": "01:02:03:04:05:06",
-        "eth_src_eth_ig": "0",
-        "eth_src_eth_addr": "fe:ed:be:ef:00:00",
-        "eth_src_eth_lg": "0",
-        "eth_dst_eth_addr": "01:02:03:04:05:06",
-        "eth_src_eth_addr_resolved": "fe:ed:be:ef:00:00",
-        "eth_dst_eth_ig": "0"
-      }
+      "type": "0x00000800"
     },
     "ip": {
       "version": "4",
-      "hdr_len": "20",
       "dsfield": {
-        "value": "0x00000000",
+        "val": "0x00000000",
         "dscp": "0",
         "ecn": "0"
       },
       "len": "60",
       "id": "0x00009f38",
       "flags": {
-        "value": "0x00000002",
+        "val": "0x00000002",
         "rb": "0",
         "df": "1",
         "mf": "0"
       },
-      "frag_offset": "0",
       "ttl": "64",
       "proto": "6",
-      "checksum": "0x00003e08",
-      "checksum_status": "2",
-      "src": "10.1.2.3",
+      "checksum": {
+        "val": "0x00003e08",
+        "status": "2"
+      },
+      "src": {
+        "val": "10.1.2.3",
+        "host": "10.1.2.3"
+      },
       "addr": "5.2.19.7",
-      "src_host": "10.1.2.3",
       "host": "5.2.19.7",
-      "dst": "5.2.19.7",
-      "dst_host": "5.2.19.7",
-      "other": {
-        "text_ip_geoip_dst_city": "Ashburn, VA",
-        "text_ip_geoip_country": "United States",
-        "text_ip_geoip_asnum": "AS14618 Amazon.com, Inc.",
-        "text_ip_geoip_dst_lat": "39.033501",
-        "text_ip_geoip_lon": "-77.483803",
-        "text_ip_geoip_dst_asnum": "AS14618 Amazon.com, Inc.",
-        "text_ip_geoip_city": "Ashburn, VA",
-        "ip_text": "Destination GeoIP: AS14618 Amazon.com, Inc., United States, Ashburn, VA, 39.033501, -77.483803",
-        "text_ip_geoip_lat": "39.033501",
-        "text_ip_geoip_dst_country": "United States",
-        "text_ip_geoip_dst_lon": "-77.483803"
+      "dst": {
+        "val": "5.2.19.7",
+        "host": "5.2.19.7"
+      },
+      "text": {
+        "val": "Destination GeoIP: AS14618 Amazon.com, Inc., United States, Ashburn, VA, 39.033501, -77.483803",
+        "ip_geoip": {
+          "asnum": "AS14618 Amazon.com, Inc.",
+          "lat": "39.033501",
+          "country": "United States",
+          "lon": "-77.483803",
+          "city": "Ashburn, VA",
+          "dst": {
+            "lon": "-77.483803",
+            "city": "Ashburn, VA",
+            "asnum": "AS14618 Amazon.com, Inc.",
+            "country": "United States",
+            "lat": "39.033501"
+          }
+        }
+      },
+      "hdr": {
+        "len": "20"
+      },
+      "frag": {
+        "offset": "0"
       }
     },
     "tcp": {
@@ -86,9 +118,8 @@
       "len": "0",
       "seq": "0",
       "ack": "0",
-      "hdr_len": "40",
       "flags": {
-        "value": "0x00000002",
+        "val": "0x00000002",
         "res": "0",
         "ns": "0",
         "cwr": "0",
@@ -97,47 +128,73 @@
         "ack": "0",
         "push": "0",
         "reset": "0",
-        "syn": "1",
+        "syn": {
+          "val": "1",
+          "_ws": {
+            "expert": {
+              "_ws_expert_tcp_connection_syn": "",
+              "_ws_expert__ws_expert_message": "Connection establish request (SYN): server port 80",
+              "_ws_expert__ws_expert_severity": "2097152",
+              "_ws_expert__ws_expert_group": "33554432"
+            }
+          }
+        },
         "fin": "0",
         "str": "\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7\u00c2\u00b7S\u00c2\u00b7"
       },
-      "window_size_value": "29200",
-      "window_size": "29200",
-      "checksum": "0x0000f408",
-      "checksum_status": "2",
-      "urgent_pointer": "0",
+      "checksum": {
+        "val": "0x0000f408",
+        "status": "2"
+      },
       "options": {
-        "value": "02:04:05:b4:04:02:08:0a:2d:4b:ef:7d:00:00:00:00:01:03:03:0a",
-        "mss": "",
-        "sack_perm": "1"
-      },
-      "options_mss": {
-        "val": "1460"
-      },
-      "options_type": {
-        "copy": "0",
-        "class": "0",
-        "number": "1"
-      },
-      "other": {
-        "tcp_options_mss_tcp_option_len": "4",
-        "text_tcp_options_timestamp_tsecr": "0",
-        "text_tcp_options_timestamp_tsval": "759951229",
-        "tcp_options_mss_tcp_option_kind": "2",
-        "tcp_options_text": "Window scale: 10 (multiply by 1024)",
-        "tcp_flags_syn__ws_expert": {
-          "_ws_expert_tcp_connection_syn": "",
-          "_ws_expert__ws_expert_message": "Connection establish request (SYN): server port 80",
-          "_ws_expert__ws_expert_severity": "2097152",
-          "_ws_expert__ws_expert_group": "33554432"
+        "val": "02:04:05:b4:04:02:08:0a:2d:4b:ef:7d:00:00:00:00:01:03:03:0a",
+        "mss": {
+          "val": "1460",
+          "tcp_option": {
+            "len": "4",
+            "kind": "2"
+          }
         },
-        "text_tcp_options_type": "1",
-        "tcp_options_sack_perm_tcp_option_len": "2",
-        "tcp_options_sack_perm_tcp_option_kind": "4",
-        "text_tcp_option_len": "3",
-        "text_tcp_options_wscale_multiplier": "1024",
-        "text_tcp_options_wscale_shift": "10",
-        "text_tcp_option_kind": "3"
+        "type": {
+          "copy": "0",
+          "class": "0",
+          "number": "1"
+        },
+        "text": {
+          "val": "Window scale: 10 (multiply by 1024)",
+          "kind": "3",
+          "type": "1",
+          "len": "3",
+          "wscale": {
+            "shift": "10",
+            "multiplier": "1024"
+          },
+          "timestamp": {
+            "tsval": "759951229",
+            "tsecr": "0"
+          }
+        },
+        "sack": {
+          "perm": {
+            "val": "1",
+            "tcp_option": {
+              "len": "2",
+              "kind": "4"
+            }
+          }
+        }
+      },
+      "hdr": {
+        "len": "40"
+      },
+      "window": {
+        "size": {
+          "val": "29200",
+          "value": "29200"
+        }
+      },
+      "urgent": {
+        "pointer": "0"
       }
     },
     "timestamp": "1545407742757"

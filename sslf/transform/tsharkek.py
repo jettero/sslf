@@ -14,6 +14,36 @@ BS_REMAPS = {
     'text_tcp_options': 'tcp_options_text',
 }
 
+def lname_set(dat, rounds=1):
+    for _ in range(rounds):
+        dat = [ i.rsplit('_',1) for i in dat ]
+        dat = set( i[0] for i in dat if len(i)>1 )
+    return dat
+
+def _dedup_key_prefix(dat, lname):
+    if lname not in dat:
+        dat[lname] = dict()
+    elif not isinstance(dat[lname], dict):
+        dat[lname] = { 'val': dat[lname] }
+    for k in [ k for k in dat if k.startswith(lname + '_') ]:
+        j = k[len(lname)+1:]
+        dat[lname][j] = dat.pop(k)
+    return dedup_key_prefixes( dat[lname] )
+
+def dedup_key_prefixes(dat):
+    r = 0
+    ls = True
+    while ls:
+        r += 1
+        ls = lname_set(dat, r)
+        log.debug("dedup_key_prefixes(%s)", ls)
+        for lname in ls:
+            if lname in dat:
+                _dedup_key_prefix(dat, lname)
+    for lname in lname_set(dat):
+        _dedup_key_prefix(dat, lname)
+    return dat
+
 class TsharkEKProcessor(JSONEventProcessor):
 
     def json_post_process(self, item):
@@ -52,7 +82,7 @@ class TsharkEKProcessor(JSONEventProcessor):
                                 k += '_'
                             log.debug('reject( %s ) -> %s', rf, k)
                             mdat[k] = ldat[rf]
-                    actual[lname] = mdat
+                    actual[lname] = dedup_key_prefixes(mdat)
             if actual:
                 actual['timestamp'] = item['timestamp']
                 return super(TsharkEKProcessor, self).json_post_process(actual)
