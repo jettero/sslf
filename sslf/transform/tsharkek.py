@@ -46,7 +46,7 @@ def dedup_key_prefixes(dat):
 
 class TsharkEKProcessor(JSONEventProcessor):
 
-    def json_post_process(self, item):
+    def json_post_process(self, item, dedup=True):
         if 'timestamp' in item and 'layers' in item:
             actual = dict()
             for lname,ldat in item['layers'].items():
@@ -82,7 +82,7 @@ class TsharkEKProcessor(JSONEventProcessor):
                                 k += '_'
                             log.debug('reject( %s ) -> %s', rf, k)
                             mdat[k] = ldat[rf]
-                    actual[lname] = dedup_key_prefixes(mdat)
+                    actual[lname] = dedup_key_prefixes(mdat) if dedup else mdat
             if actual:
                 actual['timestamp'] = item['timestamp']
                 return super(TsharkEKProcessor, self).json_post_process(actual)
