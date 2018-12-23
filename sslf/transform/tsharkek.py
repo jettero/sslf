@@ -18,7 +18,7 @@ def lname_set(dat, rounds=1):
     for _ in range(rounds):
         dat = [ i.rsplit('_',1) for i in dat ]
         dat = set( i[0] for i in dat if len(i)>1 )
-    return dat
+    return sorted(dat, key=lambda x: 0-len(x))
 
 def _dedup_key_prefix(dat, lname):
     if lname not in dat:
