@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+# coding: UTF-8
+
+import argparse
+import logging
+import sslf.transform.tsharkek as t
+import simplejson as json
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="this is program") # options and program name are automatic
+    parser.add_argument('-q', '--quiet', action='store_true')
+    parser.add_argument('--input', type=str, default='t/tshark_jpp.json')
+    parser.add_argument('-s', '--section', type=str, default='event.ip')
+    parser.add_argument('-p', '--post', type=str, default='')
+    args = parser.parse_args()
+
+    if not args.quiet:
+        logging.basicConfig(level=logging.DEBUG)
+
+    with open(args.input, 'r') as fh:
+        dat = json.load(fh)
+
+    for k in args.section.split('.'):
+        dat = dat[k]
+
+    dat = t.dedup_key_prefixes(dat)
+
+    if args.post:
+        for k in args.post.split('.'):
+            dat = dat[k]
+
+    print( json.dumps(dat, sort_keys=True, indent=True) )
