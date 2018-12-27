@@ -185,8 +185,12 @@ class DiskQueue(OKTypesMixin):
 
     @property
     def files(self):
+        def _k(x):
+            try: return [ int(x) for x in x.split('.') ]
+            except: pass
+            return x
         for path, dirs, files in sorted(os.walk(self.directory)):
-            for fname in [ os.path.join(path, f) for f in sorted(files) ]:
+            for fname in [ os.path.join(path, f) for f in sorted(files, key=_k) ]:
                 yield fname
 
     def _count(self):
