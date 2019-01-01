@@ -37,6 +37,7 @@ setup(name='sslf',
         'daemonize',
         'python-dateutil',
         'simplejson',
+        'certifi',
     ],
     entry_points={
         'console_scripts': [
