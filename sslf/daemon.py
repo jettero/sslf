@@ -157,7 +157,7 @@ class Daemon(daemonize.Daemonize):
             return
         pv = self.paths.get(path)
         if not pv:
-            pv = self.paths[path] = AttrDict()
+            pv = AttrDict()
         pv.update(args)
         class RetryBackoff(AttrDict):
             def __str__(self):
@@ -208,6 +208,8 @@ class Daemon(daemonize.Daemonize):
             record_age_filter=apl.record_age_filter,
             base_payload={'sourcetype': apl.sourcetype, 'index': apl.index},
         )
+
+        self.paths[path] = pv
 
     def parse_args(self, a):
         parser = argparse.ArgumentParser(description="this is program") # options and program name are automatic
