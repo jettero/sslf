@@ -423,9 +423,12 @@ class Daemon(daemonize.Daemonize):
                         rejected_count, queued_count)
 
     def loop(self):
-        while True:
-            self.step()
-            time.sleep(self.step_interval)
+        if self.paths:
+            while True:
+                self.step()
+                time.sleep(self.step_interval)
+        else:
+            log.error('no paths configured, nothing to do')
 
     @property
     def log_level_n(self):
