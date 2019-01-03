@@ -34,6 +34,7 @@ class Daemon(daemonize.Daemonize):
     pid_file = '/var/run/sslf.pid'
     verbose = False
     daemonize = False
+    one_step = False
     config_file = '/etc/sslf.conf'
     meta_data_dir = '/var/cache/sslf'
     paths = None
@@ -70,7 +71,7 @@ class Daemon(daemonize.Daemonize):
         'log_level', 'log_file', 'log_fmt_cli', 'log_fmt',
         'tz_load_re', 'step_runtime_max', 'step_interval', 'disk_queue',
         'mem_queue_size', 'disk_queue_size', 'verify_ssl', 'use_certifi',
-        'returner', 'record_age_filter'
+        'returner', 'record_age_filter', 'one_step'
     )
 
     def __init__(self, *a, **kw):
@@ -361,6 +362,8 @@ class Daemon(daemonize.Daemonize):
         return self._step_runtime_start
 
     def step(self):
+        step_unfinished = False
+
         log.debug('------------------------------ STEP ------------------------------')
         self.start_runtime_timer()
 
@@ -372,6 +375,7 @@ class Daemon(daemonize.Daemonize):
             if pv.hec.q in done:
                 continue
             done.add(pv.hec.q)
+            step_unfinished = True
 
             log.debug('%s %s has events to flush, flushing', pv.reader, pv.hec)
 
@@ -396,6 +400,7 @@ class Daemon(daemonize.Daemonize):
         for pv in self.paths.values():
             event_count,queued_count,filtered_count,rejected_count = 0,0,0,0
             if pv.reader.ready:
+                step_unfinished = True
                 log.debug("%s says its ready, reading", pv.reader)
                 for evr in pv.reader.read():
                     log.debug("received event from %s, queueing for hec %s", pv.reader, pv.hec)
@@ -422,10 +427,15 @@ class Daemon(daemonize.Daemonize):
                         event_count, filtered_count,
                         rejected_count, queued_count)
 
+        return step_unfinished
+
     def loop(self):
         if self.paths:
             while True:
-                self.step()
+                if not self.step():
+                    if self.one_step:
+                        log.info("one_step is set and all paths seem to have completed")
+                        return
                 time.sleep(self.step_interval)
         else:
             log.error('no paths configured, nothing to do')
