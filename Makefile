@@ -26,6 +26,17 @@ ti test-install:
 	@+ $(M) uninstall # insure ordering under -j 10
 	@+ $(M) install   #   by reinvoking make
 
+update-req:
+	pip install --upgrade pip
+	pip install --upgrade pip-tools
+	pip-compile -rU setup.py > requirements.txt
+
+requirements.txt: setup.py
+	pip-compile $< > $@
+
+install-req: requirements.txt
+	pip install -r requirements.txt
+
 uninstall:
 	bash ./.uninstall.sh
 
