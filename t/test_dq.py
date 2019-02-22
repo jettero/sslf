@@ -110,3 +110,17 @@ def test_disk_backed_queue():
     compare = compare[2:]
     assert dbq.mq.sz == 100
     assert dbq.dq.sz == 30
+
+def test_pop():
+    Q = (
+        MemQueue(TEST_DQ_DIR, fresh=True),
+        DiskQueue(TEST_DQ_DIR, fresh=True),
+    )
+
+    samp = tuple('one two three four five'.split())
+
+    for q in Q:
+        for i in samp:
+            q.put(i)
+        for i in samp:
+            assert q.pop() == i
