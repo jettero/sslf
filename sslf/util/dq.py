@@ -68,6 +68,9 @@ class MemQueue(OKTypesMixin):
         if len(self.mq) > 0:
             return self.mq.popleft()
 
+    def pop(self):
+        self.mq.popleft()
+
     def getz(self, sz=SPLUNK_MAX_MSG):
         r = b''
         while len(self.mq) > 0 and len(r) + len(self.sep) + len(self.peek()) < sz:

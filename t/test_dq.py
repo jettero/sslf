@@ -8,7 +8,7 @@ TEST_DQ_DIR = os.environ.get('TEST_DQ_DIR', f'/tmp/dq.{os.getuid()}')
 
 @pytest.fixture
 def samp():
-    return tuple('one two three four five'.split())
+    return tuple(b'one two three four five'.split())
 
 @pytest.fixture
 def mq():
@@ -124,16 +124,9 @@ def test_disk_backed_queue(dbq):
     assert dbq.mq.sz == 100
     assert dbq.dq.sz == 30
 
-def test_pop():
-    Q = (
-        MemQueue(TEST_DQ_DIR, fresh=True),
-        DiskQueue(TEST_DQ_DIR, fresh=True),
-    )
-
-    samp = tuple('one two three four five'.split())
-
-    for q in Q:
-        for i in samp:
-            q.put(i)
-        for i in samp:
-            assert q.pop() == i
+def test_mq_pop(samp,mq):
+    for i in samp:
+        mq.put(i)
+    for i in samp:
+        assert mq.peek() == i
+        mq.pop()
