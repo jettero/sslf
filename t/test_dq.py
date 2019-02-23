@@ -137,3 +137,6 @@ def test_mq_pop(samp,mq):
 
 def test_dq_pop(samp,dq):
     _test_pop(samp,dq)
+
+def test_dbq_pop(samp,dbq):
+    _test_pop(samp,dbq)

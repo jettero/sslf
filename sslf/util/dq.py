@@ -230,6 +230,12 @@ class DiskBackedQueue:
             r = self.dq.peek()
         return r
 
+    def pop(self):
+        if self.mq.cn:
+            self.mq.pop()
+        elif self.dq.cn:
+            self.dq.pop()
+
     def unget(self, msg):
         self.mq.unget(msg)
 
