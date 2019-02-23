@@ -124,9 +124,16 @@ def test_disk_backed_queue(dbq):
     assert dbq.mq.sz == 100
     assert dbq.dq.sz == 30
 
+
+def _test_pop(samp,q):
+    for i in samp:
+        q.put(i)
+    for i in samp:
+        assert q.peek() == i
+        q.pop()
+
 def test_mq_pop(samp,mq):
-    for i in samp:
-        mq.put(i)
-    for i in samp:
-        assert mq.peek() == i
-        mq.pop()
+    _test_pop(samp,mq)
+
+def test_dq_pop(samp,dq):
+    _test_pop(samp,dq)
