@@ -120,7 +120,7 @@ class MySplunkHEC:
     def __init__(self, hec_url, token, verify_ssl=True, use_certifi=False, proxy_url=False,
         redirect_limit=10, retries=1, conn_timeout=2, read_timeout=2, backoff=3,
         disk_queue=None, mem_size=DEFAULT_MEMORY_SIZE, disk_size=DEFAULT_DISK_SIZE,
-        base_payload=None, record_age_filter=27000000):
+        base_payload=None, record_age_filter=2000000):
 
         self.record_age_filter = record_age_filter
 

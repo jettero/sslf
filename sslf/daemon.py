@@ -46,7 +46,7 @@ class Daemon(daemonize.Daemonize):
     tz_load_re = '^(GMT|UTC)|^(US|Europe|Asia)/'
     step_interval = 0.5 # sleep seconds between step()s
     step_runtime_max = 2 # max time in step() before loop break
-    record_age_filter = 27000000 # 27 ksec is roughly a month
+    record_age_filter = 2000000 # 2 Msec is roughly 23 days
 
     log_level     = 'info'
     log_file      = '/var/log/sslf.log'
