@@ -6,11 +6,26 @@ from sslf.util.dq import SSLFQueueTypeError, SSLFQueueCapacityError
 
 TEST_DQ_DIR = os.environ.get('TEST_DQ_DIR', f'/tmp/dq.{os.getuid()}')
 
-def test_mem_queue():
-    mq = MemQueue(size=100)
+@pytest.fixture
+def samp():
+    return tuple('one two three four five'.split())
+
+@pytest.fixture
+def mq():
+    return MemQueue(size=100)
+
+@pytest.fixture
+def dq():
+    return DiskQueue(TEST_DQ_DIR, size=100, fresh=True)
+
+@pytest.fixture
+def dbq():
+    return DiskBackedQueue(TEST_DQ_DIR, mem_size=100, disk_size=100, fresh=True)
+
+def test_mem_queue(mq):
     borked = False
 
-    with pytest.raises(SSLFQueueTypeError, message="Expecting SSLFQueueTypeError"):
+    with pytest.raises(SSLFQueueTypeError):
         mq.put('not work')
 
     mq.put(b'one')
@@ -33,11 +48,10 @@ def test_mem_queue():
     assert mq.getz(8) == b'one two'
     assert mq.getz(8) == b'three'
 
-def test_disk_queue():
-    dq = DiskQueue(TEST_DQ_DIR, size=100, fresh=True)
+def test_disk_queue(dq):
     borked = False
 
-    with pytest.raises(SSLFQueueTypeError, message="Expecting SSLFQueueTypeError"):
+    with pytest.raises(SSLFQueueTypeError):
         dq.put('not work')
 
     dq.put(b'one')
@@ -60,14 +74,13 @@ def test_disk_queue():
     assert dq.getz(8) == b'one two'
     assert dq.getz(8) == b'three'
 
-def test_disk_backed_queue():
-    dbq = DiskBackedQueue(TEST_DQ_DIR, mem_size=100, disk_size=100, fresh=True)
+def test_disk_backed_queue(dbq):
     borked = False
 
-    with pytest.raises(SSLFQueueTypeError, message="Expecting SSLFQueueTypeError"):
+    with pytest.raises(SSLFQueueTypeError):
         dbq.put('not work')
 
-    with pytest.raises(SSLFQueueCapacityError, message="Expecting SSLFQueueCapacityError"):
+    with pytest.raises(SSLFQueueCapacityError):
         for i in range(22):
             dbq.put(f'{i:10}'.encode())
 
