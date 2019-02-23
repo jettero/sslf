@@ -138,5 +138,14 @@ def test_mq_pop(samp,mq):
 def test_dq_pop(samp,dq):
     _test_pop(samp,dq)
 
-def test_dbq_pop(samp,dbq):
-    _test_pop(samp,dbq)
+def test_dbq_pop(dbq):
+    samp = tuple( b'test-{i:02x}' for i in range(14) )
+    for i in samp:
+        dbq.put(i)
+    assert dbq.cn == 14
+    assert dbq.mq.cn == 8
+    assert dbq.dq.cn == 6
+    for i in samp:
+        assert dbq.peek() == i
+        dbq.pop()
+        assert dbq.dq.cn + dbq.mq.cn == dbq.cn
