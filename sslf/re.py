@@ -33,7 +33,7 @@ class ReEngine:
                     rname, re_config[rk], e)
 
     def compute_fields(self, input):
-        ''' take a string argument `input` and apply patterns to it
+        r'''take a string argument `input` and apply patterns to it
             patterns of the form `name:keyname` will attempt to search in
             keyname of the return dictionary instead of the given input.
 
