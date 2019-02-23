@@ -29,7 +29,7 @@ def test_setup(nc_config):
     assert sslf.config_file == 't/sslf.3'
 
     log.debug("-----=: setup(config=t/sslf.3) --> fail")
-    with pytest.raises(DaemonConfig, message="Expecting DaemonConfig error", match=r'.*?valid config.*'):
+    with pytest.raises(DaemonConfig, match=r'.*?valid config.*'):
         sslf = nc_config(config='t/sslf.3')
 
 def test_config(nc_config):
