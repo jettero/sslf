@@ -186,7 +186,9 @@ class MySplunkHEC:
         headers = urllib3.make_headers( keep_alive=True, user_agent='sslf-hec/3.14', accept_encoding=True)
         headers.update({ 'Authorization': 'Splunk ' + self.token, 'Content-Type': 'application/json' })
         fake_headers = headers.copy()
-        fake_data = dat[0:100] + '…'.encode('utf-8') if len(dat) > 100 else dat
+        fake_data = str(dat)
+        if len(fake_data) > 100:
+            fake_data = fake_data[0:98] + ' … '
         fake_headers['Authorization'] = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx' + headers['Authorization'][-4:]
         log.debug("HEC.pool_manager.request('POST', url=%s + path=%s, body=%s, headers=%s)",
             self.url, self.path, fake_data, fake_headers)
