@@ -33,7 +33,7 @@ setup(name='sslf',
     packages      = find_packages(),
     setup_requires = [ 'setuptools_scm' ],
     install_requires=[
-        'urllib3',
+        'urllib3>=1.24.2',
         'daemonize',
         'python-dateutil',
         'simplejson',
