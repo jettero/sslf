@@ -5,6 +5,22 @@ import os, shutil
 import importlib
 import sslf.daemon
 
+@pytest.fixture(scope='module')
+def samp():
+    alpha = 'abcdefghijklmnopqrstuvwxyz'
+    l,a,b,c = len(alpha),0,0,0
+    words = list()
+    for i in range(1,101):
+        a = (a+b+i) % l
+        b = (a+b+i) % l
+        c = (b+c+i) % l
+        words.append(''.join([ alpha[a],alpha[b],alpha[c],f'{i:03}' ]))
+    yield tuple(words)
+
+@pytest.fixture(scope='module')
+def b_samp(samp):
+    yield tuple([ s.encode() for s in samp ])
+
 def _e(var):
     if var in os.environ:
         l = os.environ.get(var).lower()

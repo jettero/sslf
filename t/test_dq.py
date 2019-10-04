@@ -7,10 +7,6 @@ from sslf.util.dq import SSLFQueueTypeError, SSLFQueueCapacityError
 TEST_DQ_DIR = os.environ.get('TEST_DQ_DIR', f'/tmp/dq.{os.getuid()}')
 
 @pytest.fixture
-def samp():
-    return tuple(b'one two three four five'.split())
-
-@pytest.fixture
 def mq():
     return MemQueue(size=100)
 
@@ -20,132 +16,96 @@ def dq():
 
 @pytest.fixture
 def dbq():
-    return DiskBackedQueue(TEST_DQ_DIR, mem_size=100, disk_size=100, fresh=True)
+    return DiskBackedQueue(TEST_DQ_DIR, mem_size=50, disk_size=50, fresh=True)
 
-def test_mem_queue(mq):
-    borked = False
+def _fill_q_with_samples(q, samp):
+    item_count, byte_count = 0, 0
+    with pytest.raises(SSLFQueueCapacityError):
+        for s in samp:
+            q.put(s)
+            item_count += 1
+            byte_count += len(s)
+    return item_count, byte_count
 
+def _test_q_with_samples(q, samp):
+    item_count, byte_count = _fill_q_with_samples(q, samp)
+
+    assert q.cn == item_count
+    assert q.sz == byte_count
+    assert q.peek() == samp[0]
+    assert q.get()  == samp[0]
+    assert q.peek() == samp[1]
+    assert q.get()  == samp[1]
+    assert q.cn == item_count - 2
+    assert q.sz == byte_count - len(samp[0]) - len(samp[1])
+
+    hrm = b''
+    for i in samp[2:]:
+        if len(hrm) + 1 + len(i) > 100:
+            break
+        if hrm:
+            hrm += b' '
+        hrm += i
+
+    assert q.getz(sz=100) == hrm
+    assert q.cn == 0
+
+    q.put(b'one')
+    q.put(b'two')
+    q.put(b'three')
+
+    assert q.getz(8) == b'one two'
+    assert q.getz(8) == b'three'
+    assert q.cn == 0
+
+    blah = b'this is huge' * 20
+    assert len(blah) > 100
+    with pytest.raises(SSLFQueueCapacityError):
+        q.put(blah)
+
+    assert q.cn == 0
+
+def test_mem_queue(mq, b_samp):
     with pytest.raises(SSLFQueueTypeError):
         mq.put('not work')
 
-    mq.put(b'one')
-    mq.put(b'two')
-    mq.put(b'three')
+    _test_q_with_samples(mq, b_samp)
 
-    assert len(mq) == 13
-    assert mq.peek() == b'one'
-    assert mq.get() == b'one'
-    assert mq.peek() == b'two'
-    assert len(mq) == 9
-
-    assert mq.getz() == b'two three'
-    assert len(mq) == 0
-
-    mq.put(b'one')
-    mq.put(b'two')
-    mq.put(b'three')
-
-    assert mq.getz(8) == b'one two'
-    assert mq.getz(8) == b'three'
-
-def test_disk_queue(dq):
-    borked = False
-
+def test_disk_queue(dq, b_samp):
     with pytest.raises(SSLFQueueTypeError):
         dq.put('not work')
 
-    dq.put(b'one')
-    dq.put(b'two')
-    dq.put(b'three')
+    _test_q_with_samples(dq, b_samp)
 
-    assert len(dq) == 13
-    assert dq.peek() == b'one'
-    assert dq.get() == b'one'
-    assert dq.peek() == b'two'
-    assert len(dq) == 9
-
-    assert dq.getz() == b'two three'
-    assert len(dq) == 0
-
-    dq.put(b'one')
-    dq.put(b'two')
-    dq.put(b'three')
-
-    assert dq.getz(8) == b'one two'
-    assert dq.getz(8) == b'three'
-
-def test_disk_backed_queue(dbq):
-    borked = False
-
+def test_disk_backed_queue(dbq, b_samp):
     with pytest.raises(SSLFQueueTypeError):
         dbq.put('not work')
 
-    with pytest.raises(SSLFQueueCapacityError):
-        for i in range(22):
-            dbq.put(f'{i:10}'.encode())
+    _test_q_with_samples(dbq, b_samp)
+    _fill_q_with_samples(dbq, b_samp)
 
-    assert dbq.mq.sz == 100
-    assert dbq.dq.sz == 100
+    assert dbq.mq.sz <= 50
+    assert dbq.dq.sz <= 50
+    assert dbq.mq.sz > 10
+    assert dbq.dq.sz > 10
 
-    mr,dr = 100,100
-    for i in range(20):
-        b = f'{i:10}'.encode()
-        assert dbq.get() == b
-
-        if dr:
-            dr -= 10
-        else:
-            mr -= 10
-
-        assert dbq.mq.sz == mr
-        assert dbq.dq.sz == dr
-
-    assert dbq.mq.sz == 0
-    assert dbq.dq.sz == 0
-
-    compare = list()
-    for i in range(15):
-        v = f'{i:10}'.encode()
-        dbq.put(v)
-        compare.append(v)
-    assert dbq.mq.sz == 100
-    assert dbq.dq.sz == 50
-    assert dbq.getz() == dbq.mq.sep.join(compare)
-
-    compare = list()
-    for i in range(15):
-        v = f'{i:10}'.encode()
-        dbq.put(v)
-        compare.append(v)
-    assert dbq.mq.sz == 100
-    assert dbq.dq.sz == 50
-    assert dbq.getz(25) == dbq.mq.sep.join(compare[0:2])
-    compare = compare[2:]
-    assert dbq.mq.sz == 100
-    assert dbq.dq.sz == 30
-
-
-def _test_pop(samp,q):
-    for i in samp:
-        q.put(i)
+def _test_pop(q, samp, do_also=None):
+    _fill_q_with_samples(q, samp)
     for i in samp:
         assert q.peek() == i
         q.pop()
+        if callable(do_also):
+            do_also()
+        if q.cn < 1:
+            break
 
-def test_mq_pop(samp,mq):
-    _test_pop(samp,mq)
+def test_mq_pop(mq, b_samp):
+    _test_pop(mq, b_samp)
 
-def test_dq_pop(samp,dq):
-    _test_pop(samp,dq)
+def test_dq_pop(dq, b_samp):
+    _test_pop(dq, b_samp)
 
-def test_dbq_pop(dbq):
-    samp = tuple( b'test-{i:02x}' for i in range(14) )
-    for i in samp:
-        dbq.put(i)
-    assert dbq.cn == 14
-    assert dbq.mq.cn == 8
-    assert dbq.dq.cn == 6
-    for i in samp:
-        assert dbq.peek() == i
-        dbq.pop()
+def test_dbq_pop(dbq, b_samp):
+    def check_cn():
         assert dbq.dq.cn + dbq.mq.cn == dbq.cn
+    _test_pop(dbq, b_samp, check_cn)

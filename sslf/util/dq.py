@@ -50,41 +50,56 @@ class MemQueue(OKTypesMixin):
         self.mq = deque()
 
     def accept(self, item):
+        ''' Decide if the given item will fit in the queue '''
         if len(item) + self.sz > self.size:
             return False
         return True
 
     def put(self, item):
+        ''' append item to the queue '''
         self.check_type(item)
         if not self.accept(item):
             raise SSLFQueueCapacityError('refusing to accept item due to size')
         self.mq.append(item)
 
     def unget(self, item):
+        ''' put this item back in the front of the queue (woopsie?) '''
         self.check_type(item)
         self.mq.appendleft(item)
 
     def get(self):
+        ''' pop next item and return it, ignore if queue is empty (returning None) '''
         if len(self.mq) > 0:
             return self.mq.popleft()
 
     def pop(self):
-        self.mq.popleft()
+        ''' pop next item without returning it '''
+        self.get()
 
     def getz(self, sz=SPLUNK_MAX_MSG):
+        ''' pop elements from the stack and combine (with separators when
+            necessary) until param sz is reached
+
+            special case: if the very first element is larger than sz, return
+            it anyway to prevent getting stuck.
+        '''
         r = b''
         while len(self.mq) > 0 and len(r) + len(self.sep) + len(self.peek()) < sz:
             if r:
                 r += self.sep
             r += self.mq.popleft()
+        if not r:
+            return self.get()
         return r
 
     def peek(self):
+        ''' if there's elements in the memqueue, return the first one without popping from the stack '''
         if len(self.mq) > 0:
             return self.mq[0]
 
     @property
     def sz(self):
+        ''' bytes in queue '''
         s = 0
         for i in self.mq:
             s += len(i)
@@ -92,13 +107,16 @@ class MemQueue(OKTypesMixin):
 
     @property
     def cn(self):
+        ''' items in queue '''
         return len(self.mq)
 
     @property
     def msz(self):
+        ''' size of queue in bytes including separators '''
         return self.sz + max(0, len(self.sep) * (self.cn -1))
 
     def __len__(self):
+        ''' see: msz property '''
         return self.msz
 
 
