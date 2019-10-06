@@ -4,6 +4,7 @@ import os
 import logging
 import time
 import shutil
+import errno
 from collections import deque
 
 __all__ = [
