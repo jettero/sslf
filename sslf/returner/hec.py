@@ -288,11 +288,15 @@ class MySplunkHEC:
 
     def flush(self):
         flush_result = AttrDict(s=0, c=0, ok=True)
+        if self.q.cn > 0:
+            log.debug('start HEC.flush()')
         while self.q.cn > 0:
+            log.debug('HEC.flush() cn=%d', self.q.cn)
             payloadz = self.q.getz()
             if not payloadz:
                 break
             res = self._send_event(payloadz)
+            log.debug('HEC.flush() sent payloadz, res-ok: %s', bool(res.ok))
             if res.ok:
                 flush_result['s'] += len(payloadz)
                 flush_result['c'] += 1

@@ -175,12 +175,15 @@ class DiskQueue(OKTypesMixin):
     def peek(self):
         for fname in self.files:
             with open(fname, 'rb') as fh:
-                return fh.read()
+                ret = fh.read()
+                log.debug('peek() read %d bytes', len(ret))
+                return ret
 
     def get(self):
         for fname in self.files:
             with open(fname, 'rb') as fh:
                 ret = fh.read()
+                log.debug('get() %d bytes', len(ret))
             os.unlink(fname)
             self._count()
             return ret
@@ -192,10 +195,12 @@ class DiskQueue(OKTypesMixin):
         for fname in self.files:
             with open(fname, 'rb') as fh:
                 p = fh.read()
+                log.debug('getz() %d bytes', len(p))
             if len(r) + len(self.sep) + len(p) > sz:
                 break
             if r:
                 r += self.sep
+                log.debug(' ... %d bytes so far', len(p))
             r += p
             os.unlink(fname)
         self._count()
@@ -203,9 +208,12 @@ class DiskQueue(OKTypesMixin):
 
     def pop(self):
         for fname in self.files:
+            log.debug('pop()')
+            sz = os.stat(fname).st_size
             os.unlink(fname)
+            self.cn -= 1
+            self.sz -= sz
             break
-        self._count()
 
     @property
     def files(self):
@@ -218,6 +226,7 @@ class DiskQueue(OKTypesMixin):
                 yield fname
 
     def _count(self):
+        log.debug('starting queue count')
         self.cn = 0
         self.sz = 0
         for fname in self.files:
@@ -261,6 +270,7 @@ class DiskBackedQueue:
         self.mq.unget(msg)
 
     def _disk_to_mem(self):
+        log.debug('populate memory queue with disk queue items')
         while self.dq.cn > 0:
             # NOTE: dq.peek() read()s the file but doesn't unlink()
             # dq.get() read()s the file and unlink()s it
@@ -271,7 +281,9 @@ class DiskBackedQueue:
             if self.mq.accept(p):
                 self.mq.put(p)
                 self.dq.pop()
+                log.debug('mq.sz=%d dq.sz=%d', self.mq.sz, self.dq.sz)
             else:
+                log.debug('memory queue is populated')
                 break
 
     def get(self):
