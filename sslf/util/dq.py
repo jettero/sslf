@@ -166,11 +166,12 @@ class DiskQueue(OKTypesMixin):
             raise SSLFQueueCapacityError('refusing to accept item due to size')
         fanout,remainder = self._fanout(f'{int(time.time())}.{self.cn}')
         d = self._mkdir(fanout)
-        f = os.path.join(d, remainder)
-        with open(f, 'wb') as fh:
+        fname = os.path.join(d, remainder)
+        with open(fname, 'wb') as fh:
             log.debug('writing item to disk cache')
             fh.write(item)
-        self._count()
+        self.cn += 1
+        self.sz += os.stat(fname).st_size
 
     def peek(self):
         for fname in self.files:
@@ -184,8 +185,7 @@ class DiskQueue(OKTypesMixin):
             with open(fname, 'rb') as fh:
                 ret = fh.read()
                 log.debug('get() %d bytes', len(ret))
-            os.unlink(fname)
-            self._count()
+            self._counting_unlink(fname)
             return ret
 
     def getz(self, sz=SPLUNK_MAX_MSG):
@@ -209,10 +209,7 @@ class DiskQueue(OKTypesMixin):
     def pop(self):
         for fname in self.files:
             log.debug('pop()')
-            sz = os.stat(fname).st_size
-            os.unlink(fname)
-            self.cn -= 1
-            self.sz -= sz
+            self._counting_unlink(fname)
             break
 
     @property
@@ -224,6 +221,13 @@ class DiskQueue(OKTypesMixin):
         for path, dirs, files in sorted(os.walk(self.directory)):
             for fname in [ os.path.join(path, f) for f in sorted(files, key=_k) ]:
                 yield fname
+
+    def _counting_unlink(self, fname, skip_unlink=False):
+        sz = os.stat(fname).st_size
+        if not skip_unlink:
+            os.unlink(fname)
+        self.cn -= 1
+        self.sz -= sz
 
     def _count(self):
         log.debug('starting queue count')
