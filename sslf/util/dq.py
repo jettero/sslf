@@ -202,8 +202,7 @@ class DiskQueue(OKTypesMixin):
                 r += self.sep
                 log.debug(' ... %d bytes so far', len(p))
             r += p
-            os.unlink(fname)
-        self._count()
+            os._counting_unlink(fname)
         return r
 
     def pop(self):
