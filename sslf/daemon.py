@@ -423,8 +423,7 @@ class Daemon(daemonize.Daemonize):
                         break
                 if event_count > 0:
                     log.info("%s -> %s; events=%d filtered=%d rejected=%d queued=%d",
-                        pv.reader.path, pv.hec.url,
-                        event_count, filtered_count,
+                        pv.reader.path, pv.hec.url, event_count, filtered_count,
                         rejected_count, queued_count)
 
         return step_unfinished
