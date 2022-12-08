@@ -4,7 +4,7 @@
 #
 #    pip-compile setup.py
 #
-certifi==2019.9.11
+certifi==2022.12.7
 daemonize==2.5.0
 python-dateutil==2.8.0
 simplejson==3.16.0
